@@ -17,6 +17,7 @@ db = SQLAlchemy(app)
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
 
 class Quest(db.Model):
@@ -64,20 +65,22 @@ def register():
     if not username:
         return {"error": "Not valid username!"}, 400
 
-    password = request.form.get('password')
-    encoded = password.encode()
-    password = ""
-    password = sha256(encoded).hexdigest()
+    
+    password = sha256(request.form.get('password').encode()).hexdigest()
 
     if not password:
         return {"error": "Not valid hash!"}, 400
+    
+    email = request.form.get('email')
+    if not email:
+        return {"error": "Not valid email!"}, 400
 
     # Check if user already exists, returns False and message
     if User.query.filter_by(username=username).first():
         return {"error": "User already exists!"}, 400
 
 
-    new_user = User(username=username, password_hash=password)
+    new_user = User(username=username, password_hash=password, email=email)
     db.session.add(new_user)
     db.session.commit()
 
@@ -163,6 +166,7 @@ def assign_quest():
     db.session.commit()
     
     return {"success" :f"Quest '{quest.description}' assigned to user {user.username}."}, 200
+
 
 @app.route('/user_quests/<username>')
 def user_quests(username):

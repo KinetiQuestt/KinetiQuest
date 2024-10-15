@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request, redirect, url_for, make_response
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -56,10 +56,7 @@ def register():
     if not username:
         return {"error": "Not valid username!"}, 400
     
-    password = request.form.get('password')
-    encoded = password.encode()
-    password = ""
-    password = sha256(encoded).hexdigest()
+    password = sha256((request.form.get('password')).encode()).hexdigest()
     
     if not password:
         return {"error": "Not valid hash!"}, 400
@@ -73,22 +70,43 @@ def register():
     db.session.add(new_user)
     db.session.commit()
 
-    # Simply redirecting to login for now -> change so it saves login state
-    return redirect(url_for('login'))
+    
+    response = make_response(redirect(url_for('home')))
+
+    response.set_cookie('logged_in', 1)
+    response.set_cookie('username', username)
+
+    return response
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Will display Login Page on a GET request or"""
     if request.method == 'GET':
         return "Please login: "
+    
     # Check if login is successful
-    return redirect(url_for('home'))
+
+    
+    username = request.form.get('username')
+    if not username:
+        return {"error": "Not valid username!"}, 400
+
+    response = make_response(redirect(url_for('home')))
+    response.set_cookie('logged_in', 1)
+    response.set_cookie('username', username)
+
+    return response
 
 
 @app.route('/home', methods=['GET'])
 def home():
+    logged_in = request.cookies.get('logged_in')
+    
 
-    return f"Welcome !"
+    if logged_in != 1:
+        return redirect(url_for('login'))
+    username = request.cookies.get('username')
+    return f"Welcome {username}!"
 
 @app.route('/api/create_quest', methods=['POST'])
 def create_quest():

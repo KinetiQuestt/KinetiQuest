@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request, redirect, url_for, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -7,6 +7,7 @@ from hashlib import sha256
 
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
 
 db = SQLAlchemy(app)
@@ -28,67 +29,87 @@ class QuestAssignment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     quest_id = db.Column(db.Integer, db.ForeignKey('quest.id'), nullable=False)
-    
+
     user = db.relationship('User', backref='assignments')
     quest = db.relationship('Quest', backref='assignments')
 
 with app.app_context():
     db.create_all()
 
+@app.route('/')
+def welcome():
+    # This route renders the main homepage, which is index.html
+    return render_template('index.html')
 
-
-@app.route('/register', methods=['POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     """ Registers a user with a unique username and hashed password
-        
+
         Post:
             String -> username = unique username
             String -> password = raw password to be hashed then stored
 
         Returns:
-            String -> Success/Error   
+            String -> Success/Error
             Bool -> Respond Code
-             
+
     """
+
+    if request.method == 'GET':
+    # Render the register.html page if it's a GET request
+        return render_template('register.html')
 
     # Reads from the POSTed json form the username and password
     username = request.form.get('username')
     if not username:
         return {"error": "Not valid username!"}, 400
-    
+
     password = request.form.get('password')
     encoded = password.encode()
     password = ""
     password = sha256(encoded).hexdigest()
-    
+
     if not password:
         return {"error": "Not valid hash!"}, 400
 
-    # Check if user already exists, returns False and message 
+    # Check if user already exists, returns False and message
     if User.query.filter_by(username=username).first():
         return {"error": "User already exists!"}, 400
-    
-    
+
+
     new_user = User(username=username, password_hash=password)
     db.session.add(new_user)
     db.session.commit()
 
     # Simply redirecting to login for now -> change so it saves login state
-    return redirect(url_for('login'))
+    return redirect(url_for('home'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Will display Login Page on a GET request or"""
     if request.method == 'GET':
-        return "Please login: "
-    # Check if login is successful
-    return redirect(url_for('home'))
+        # Render the login.html page if it's a GET request
+        return render_template('login.html')
 
+    # Check if login is successful
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    user = User.query.filter_by(username=username).first()
+    if user and user.password_hash == sha256(password.encode()).hexdigest():
+        # Store the username in session
+        session['username'] = username
+        return redirect(url_for('home'))
+
+    return {"error": "Invalid credentials!"}, 400
 
 @app.route('/home', methods=['GET'])
 def home():
+    username = session.get('username', 'Guest')
+    return render_template('home.html', username=username)
 
-    return f"Welcome !"
+if __name__ == '__main__':
+    app.run(debug=True)
 
 @app.route('/api/create_quest', methods=['POST'])
 def create_quest():

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KinetiQuest - Welcome</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(45deg, #ff9a9e, #fad0c4, #ff9a9e);
+            background-size: 300% 300%;
+            animation: gradientAnimation 10s ease infinite;
+        }
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        .container img {
+            width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .button-container a {
+            text-decoration: none;
+            background-color: #007BFF;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .button-container a:hover {
+            background-color: #0056b3;
+        }
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body>
+<div class="header" style="text-align: center; width: 100%; position: absolute; top: 40px;">
+    <h1 style="font-family: 'VT323', monospace; font-size: 8em; margin: 40px 20px;">KinetiQuest</h1>
+</div>
+<div class="container">
+    <img src="../static/dogandcat.png" alt="Dog and Cat">
+    <div class="button-container">
+        <a href="/login">Login</a>
+        <a href="/register">Register</a>
+    </div>
+</div>
+</body>
+</html>

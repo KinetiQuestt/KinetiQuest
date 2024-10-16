@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, make_response
+from flask import Flask, request, redirect, url_for, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -7,6 +7,7 @@ from hashlib import sha256
 
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
 
 db = SQLAlchemy(app)
@@ -16,6 +17,7 @@ db = SQLAlchemy(app)
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
 
 class Quest(db.Model):
@@ -28,61 +30,67 @@ class QuestAssignment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     quest_id = db.Column(db.Integer, db.ForeignKey('quest.id'), nullable=False)
-    
+
     user = db.relationship('User', backref='assignments')
     quest = db.relationship('Quest', backref='assignments')
 
 with app.app_context():
     db.create_all()
 
+@app.route('/')
+def welcome():
+    # This route renders the main homepage, which is index.html
+    return render_template('index.html')
 
-
-@app.route('/register', methods=['POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     """ Registers a user with a unique username and hashed password
-        
+
         Post:
             String -> username = unique username
             String -> password = raw password to be hashed then stored
 
         Returns:
-            String -> Success/Error   
+            String -> Success/Error
             Bool -> Respond Code
-             
+
     """
+
+    if request.method == 'GET':
+    # Render the register.html page if it's a GET request
+        return render_template('register.html')
 
     # Reads from the POSTed json form the username and password
     username = request.form.get('username')
     if not username:
         return {"error": "Not valid username!"}, 400
+
     
-    password = sha256((request.form.get('password')).encode()).hexdigest()
-    
+    password = sha256(request.form.get('password').encode()).hexdigest()
+
     if not password:
         return {"error": "Not valid hash!"}, 400
+    
+    email = request.form.get('email')
+    if not email:
+        return {"error": "Not valid email!"}, 400
 
-    # Check if user already exists, returns False and message 
+    # Check if user already exists, returns False and message
     if User.query.filter_by(username=username).first():
         return {"error": "User already exists!"}, 400
-    
-    
-    new_user = User(username=username, password_hash=password)
+
+
+    new_user = User(username=username, password_hash=password, email=email)
     db.session.add(new_user)
     db.session.commit()
 
-    
-    response = make_response(redirect(url_for('home')))
-
-    response.set_cookie('logged_in', 1)
-    response.set_cookie('username', username)
-
-    return response
+    return redirect(url_for('home'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Will display Login Page on a GET request or"""
     if request.method == 'GET':
-        return "Please login: "
+        return render_template('login.html')
     
     # Check if login is successful
 
@@ -90,23 +98,26 @@ def login():
     username = request.form.get('username')
     if not username:
         return {"error": "Not valid username!"}, 400
+    
+        # Render the login.html page if it's a GET request
+        
 
-    response = make_response(redirect(url_for('home')))
-    response.set_cookie('logged_in', 1)
-    response.set_cookie('username', username)
+    # Check if login is successful
+    username = request.form.get('username')
+    password = request.form.get('password')
 
-    return response
+    user = User.query.filter_by(username=username).first()
+    if user and user.password_hash == sha256(password.encode()).hexdigest():
+        # Store the username in session
+        session['username'] = username
+        return redirect(url_for('home'))
 
+    return {"error": "Invalid credentials!"}, 400
 
 @app.route('/home', methods=['GET'])
 def home():
-    logged_in = request.cookies.get('logged_in')
-    
-
-    if logged_in != 1:
-        return redirect(url_for('login'))
-    username = request.cookies.get('username')
-    return f"Welcome {username}!"
+    username = session.get('username', 'Guest')
+    return render_template('home.html', username=username)
 
 @app.route('/api/create_quest', methods=['POST'])
 def create_quest():
@@ -160,6 +171,7 @@ def assign_quest():
     db.session.commit()
     
     return {"success" :f"Quest '{quest.description}' assigned to user {user.username}."}, 200
+
 
 @app.route('/user_quests/<username>')
 def user_quests(username):

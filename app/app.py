@@ -1,12 +1,19 @@
 from flask import Flask, request, redirect, url_for, render_template, session
 from hashlib import sha256
 from models import db, User, Quest, QuestAssignment
+from sqlalchemy import update
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
 
 db.init_app(app)
+
+
+
+######################################
+########## Main User Pages ###########
+######################################
 
 @app.route('/')
 def welcome():
@@ -75,20 +82,55 @@ def login():
 
     # Check if login is successful
     username = request.form.get('username')
-    password = request.form.get('password')
+    password = sha256(request.form.get('password').encode()).hexdigest()
 
     user = User.query.filter_by(username=username).first()
-    if user and user.password_hash == sha256(password.encode()).hexdigest():
+    if user and user.password_hash == password:
         # Store the username in session
         session['username'] = username
+
+        db.session.execute(
+            update(User).where(User.id == user.id)
+        )
+        db.session.commit()
+        print(user)
+
         return redirect(url_for('home'))
 
     return {"error": "Invalid credentials!"}, 400
+
+
 
 @app.route('/home', methods=['GET'])
 def home():
     username = session.get('username', 'Guest')
     return render_template('home.html', username=username)
+
+
+
+@app.route('/user_quests/')
+def user_quests():
+    username = session.get('username', None)
+
+    if not username:
+        return redirect(url_for('login'))
+
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return "User not found."
+    
+    # Query the user's quest assignments
+    assignments = QuestAssignment.query.filter_by(user_id=user.id).all()
+    
+    # Get the quests through the assignments
+    quests = [assignment.quest.description for assignment in assignments]
+    
+    return f"quests for {username}: " + ', '.join(quests)
+
+
+######################################
+###### API and Quest Management ######
+######################################
 
 @app.route('/api/create_quest', methods=['POST'])
 def create_quest():
@@ -106,13 +148,15 @@ def create_quest():
     # Check for correct permissions for call
     description = request.form.get('description')
     weight = request.form.get('weight')
+    if not description or not weight:
+        return {"Error" : "Missing field in POST!"}, 400
     
     # Create and store the new quest
     new_quest = Quest(description=description, weight=weight)
     db.session.add(new_quest)
     db.session.commit()
     
-    return {"success" : "Quest created successfully!"}, 200
+    return {"success" : "Quest created successfully!", "quest": new_quest.__repr__()}, 200
 
 @app.route('/api/assign_quest', methods=['POST'])
 def assign_quest():
@@ -144,19 +188,7 @@ def assign_quest():
     return {"success" :f"Quest '{quest.description}' assigned to user {user.username}."}, 200
 
 
-@app.route('/user_quests/<username>')
-def user_quests(username):
-    user = User.query.filter_by(username=username).first()
-    if not user:
-        return "User not found."
-    
-    # Query the user's quest assignments
-    assignments = QuestAssignment.query.filter_by(user_id=user.id).all()
-    
-    # Get the quests through the assignments
-    quests = [assignment.quest.description for assignment in assignments]
-    
-    return f"quests for {username}: " + ', '.join(quests)
+
 
 
 if __name__ == "__main__":

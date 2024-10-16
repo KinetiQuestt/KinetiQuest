@@ -1,41 +1,12 @@
 from flask import Flask, request, redirect, url_for, render_template, session
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-import os
 from hashlib import sha256
-
+from models import db, User, Quest, QuestAssignment
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
 
-db = SQLAlchemy(app)
-
-
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)
-
-class Quest(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    description = db.Column(db.String(200), nullable=False)
-    weight = db.Column(db.Integer, nullable=False)
-    status = db.Column(db.String(20), default='pending')
-
-class QuestAssignment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    quest_id = db.Column(db.Integer, db.ForeignKey('quest.id'), nullable=False)
-
-    user = db.relationship('User', backref='assignments')
-    quest = db.relationship('Quest', backref='assignments')
-
-with app.app_context():
-    db.create_all()
+db.init_app(app)
 
 @app.route('/')
 def welcome():
@@ -188,10 +159,9 @@ def user_quests(username):
     return f"quests for {username}: " + ', '.join(quests)
 
 
-def main():
-    return 0
-
 if __name__ == "__main__":
-    app.app_context().push()
+    with app.app_context():
+        db.create_all()
+    # app.app_context().push()
 
     app.run(debug=True)

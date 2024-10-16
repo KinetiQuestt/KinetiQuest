@@ -1,7 +1,7 @@
 from flask import Flask, request, redirect, url_for, render_template, session
 from hashlib import sha256
 from models import db, User, Quest, QuestAssignment
-from sqlalchemy import func
+from sqlalchemy import update
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -88,7 +88,13 @@ def login():
     if user and user.password_hash == password:
         # Store the username in session
         session['username'] = username
-        user.most_recent_login = func.now()
+
+        db.session.execute(
+            update(User).where(User.id == user.id)
+        )
+        db.session.commit()
+        print(user)
+
         return redirect(url_for('home'))
 
     return {"error": "Invalid credentials!"}, 400
@@ -143,14 +149,14 @@ def create_quest():
     description = request.form.get('description')
     weight = request.form.get('weight')
     if not description or not weight:
-        {"Error" : "Missing field in POST!"}, 400
+        return {"Error" : "Missing field in POST!"}, 400
     
     # Create and store the new quest
     new_quest = Quest(description=description, weight=weight)
     db.session.add(new_quest)
     db.session.commit()
     
-    return {"success" : "Quest created successfully!"}, 200
+    return {"success" : "Quest created successfully!", "quest": new_quest.__repr__()}, 200
 
 @app.route('/api/assign_quest', methods=['POST'])
 def assign_quest():

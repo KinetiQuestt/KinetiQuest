@@ -1,6 +1,6 @@
 from flask import Flask, request, redirect, url_for, render_template, session
 from hashlib import sha256
-from models import db, User, Quest, QuestAssignment
+from models import db, User, Quest, QuestCopy
 from sqlalchemy import update
 
 app = Flask(__name__)
@@ -59,8 +59,7 @@ def register():
 
 
     new_user = User(username=username, password_hash=password, email=email)
-    db.session.add(new_user)
-    db.session.commit()
+    new_user.save()
 
     return redirect(url_for('home'))
 
@@ -119,12 +118,12 @@ def user_quests():
         return "User not found."
     
     # Query the user's quest assignments
-    assignments = QuestAssignment.query.filter_by(user_id=user.id).all()
+    # assignments = QuestAssignment.query.filter_by(user_id=user.id).all()
     
     # Get the quests through the assignments
-    quests = [assignment.quest.description for assignment in assignments]
+    # quests = [assignment.quest.description for assignment in assignments]
     
-    return f"quests for {username}: " + ', '.join(quests)
+    return f"quests for {username}: " #+ ', '.join(quests)
 
 
 ######################################

@@ -93,7 +93,6 @@ def login():
             update(User).where(User.id == user.id)
         )
         db.session.commit()
-        print(user)
 
         return redirect(url_for('home'))
 

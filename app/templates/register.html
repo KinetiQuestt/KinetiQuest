@@ -48,6 +48,11 @@
         .container button:hover {
             background-color: #0056b3;
         }
+        .error-message {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
         @keyframes gradientAnimation {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -59,11 +64,36 @@
 <div class="container">
     <h2>Create KinetiQuest Account</h2>
     <form action="/register" method="POST">
+        <!-- Display flash messages for errors -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="error-message">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
         <input type="email" name="email" placeholder="Email" required>
         <input type="text" name="username" placeholder="Username" required>
         <input type="password" name="password" placeholder="Password" required>
         <button type="submit">Continue</button>
     </form>
 </div>
+
+
+<script>
+    document.getElementById('registerForm').addEventListener('submit', function(event) {
+        var emailField = document.getElementById('email');
+        var errorMessage = document.getElementById('error-message');
+        var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;  // Simple regex for validating email
+
+        // Check if the email is valid
+        if (!emailPattern.test(emailField.value)) {
+            event.preventDefault();  // Stop the form from submitting
+            errorMessage.style.display = 'block';  // Show error message
+        } else {
+            errorMessage.style.display = 'none';  // Hide error message if valid
+        }
+    });
+</script>
 </body>
 </html>

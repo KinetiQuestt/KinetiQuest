@@ -64,12 +64,25 @@ class Quest(db.Model):
     def __init__(self, description):
         self.description = description
 
-    def create_copy(self):
+    def start_quest(self, user): 
+        # Creating new quest for individual user
         new_quest = QuestCopy(self.id)
+        new_quest.assign_quest(user)
+
         new_quest.save()
+        
         return new_quest.id
 
+    def finish_quest(self, quest_copy_id):
+        completed_quest = next((copy for copy in self.copies if copy.id == quest_copy_id), None)
 
+        if completed_quest is None:
+            return f"QuestCopy with id {quest_copy_id} does not exist for this Quest."
+        
+        if completed_quest.status != 'complete':
+            return f"Quest not yet marked as completed."
+
+        completed_quest.delete()
 
     def save(self):
         db.session.add(self)
@@ -84,17 +97,22 @@ class QuestCopy(db.Model):
     quest_id = db.Column(db.Integer, db.ForeignKey('quest.id'), nullable=False)
     assigned_to = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-    status = db.Column(db.String(20), default='unstarted')
+    status = db.Column(db.String(20), default='unstarted', nullable=False)
+    reward = db.Column(db.Integer, nullable=False)
 
     start_time = db.Column(db.DateTime, default=lambda: datetime.now(tz=pytz.utc))
     end_time = db.Column(db.DateTime)
 
 
-    def __init__(self, quest_id, duration_hours=2):
+    def __init__(self, quest_id, reward=0, duration_hours=2):
         self.quest_id = quest_id
+        self.reward = reward
         # some sort of calculation on the end time of the quest
         self.end_time = self.start_time + timedelta(hours=duration_hours)
 
+    def assign_quest(self, user):
+        self.assigned_to = user.id
+        self.status = 'started'
 
     def save(self):
         db.session.add(self)
@@ -104,7 +122,7 @@ class QuestCopy(db.Model):
         db.session.delete(self)
         db.session.commit()
 
-        
+
 # class QuestAssignment(db.Model):
 #     id = db.Column(db.Integer, primary_key=True)
 #     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

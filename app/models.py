@@ -32,10 +32,10 @@ class Quest(db.Model):
     def __repr__(self) -> str:
         return f"Quest(id={self.id!r}, Description(description={self.description!r}), Weight(weight={self.weight!r}), Status(status={self.status!r})"
 
-class QuestAssignment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    quest_id = db.Column(db.Integer, db.ForeignKey('quest.id'), nullable=False)
+# class QuestAssignment(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+#     quest_id = db.Column(db.Integer, db.ForeignKey('quest.id'), nullable=False)
 
-    user = db.relationship('User', backref='assignments')
-    quest = db.relationship('Quest', backref='assignments')
+#     user = db.relationship('User', backref='assignments')
+#     quest = db.relationship('Quest', backref='assignments')

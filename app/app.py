@@ -1,6 +1,6 @@
 from flask import Flask, flash, request, redirect, url_for, render_template, session
 from hashlib import sha256
-from models import db, User, Quest, QuestAssignment
+from models import db, User, Quest, QuestCopy
 from sqlalchemy import update
 import re
 

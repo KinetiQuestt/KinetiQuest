@@ -1,7 +1,6 @@
 from flask import Flask, flash, request, redirect, url_for, render_template, session
 from hashlib import sha256
 from models import db, User, Quest, QuestCopy
-from models import db, User, Quest, QuestCopy
 from sqlalchemy import update
 import re
 
@@ -59,7 +58,7 @@ def register():
         flash('Email already registered.', 'error')
         return render_template('register.html')
 
-    new_user = User(username=username, password_hash=password, email=email)
+    new_user = User(username=username, password_hash=password_hash, email=email)
     new_user.save()
 
     # Flash a success message and redirect to login page

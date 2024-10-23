@@ -1,11 +1,14 @@
-from flask import Flask, request, redirect, url_for, render_template, session
+from flask import Flask, flash, request, redirect, url_for, render_template, session
 from hashlib import sha256
 from models import db, User, Quest, QuestCopy
+from models import db, User, Quest, QuestCopy
 from sqlalchemy import update
+import re
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+email_pattern = re.compile(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
 
 db.init_app(app)
 
@@ -20,82 +23,104 @@ def welcome():
     # This route renders the main homepage, which is index.html
     return render_template('index.html')
 
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    """ Registers a user with a unique username and hashed password
-
-        Post:
-            String -> username = unique username
-            String -> password = raw password to be hashed then stored
-
-        Returns:
-            String -> Success/Error
-            Bool -> Respond Code
-
-    """
-
     if request.method == 'GET':
-    # Render the register.html page if it's a GET request
         return render_template('register.html')
 
-    # Reads from the POSTed json form the username and password
+    # Read the form data
     username = request.form.get('username')
-    if not username:
-        return {"error": "Not valid username!"}, 400
-
-    
-    password = sha256(request.form.get('password').encode()).hexdigest()
-
-    if not password:
-        return {"error": "Not valid hash!"}, 400
-    
+    password = request.form.get('password')
     email = request.form.get('email')
-    if not email:
-        return {"error": "Not valid email!"}, 400
 
-    # Check if user already exists, returns False and message
+    # Validate input and check for existing users
+    if not username:
+        flash('Please enter a valid username.', 'error')
+        return render_template('register.html')
+
+    email_pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+    if not email or not re.match(email_pattern, email):
+        flash('Please enter a valid email.', 'error')
+        return render_template('register.html')
+
+    if password:
+        password_hash = sha256(password.encode()).hexdigest()
+    else:
+        flash('Password hashing failed.', 'error')
+        return render_template('register.html')
+
     if User.query.filter_by(username=username).first():
-        return {"error": "User already exists!"}, 400
+        flash('Username already exists.', 'error')
+        return render_template('register.html')
 
+    if User.query.filter_by(email=email).first():
+        flash('Email already registered.', 'error')
+        return render_template('register.html')
 
     new_user = User(username=username, password_hash=password, email=email)
     new_user.save()
 
-    return redirect(url_for('home'))
+    # Flash a success message and redirect to login page
+    flash('Registration successful! Please login.', 'success')
+    return redirect(url_for('login'))
+
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """Will display Login Page on a GET request or"""
+    """ Authenticates a user with username and password.
+
+        Post:
+            String -> username = username to authenticate
+            String -> password = raw password to compare with the stored hash
+
+        Returns:
+            Redirect -> Success/Error
+    """
+
     if request.method == 'GET':
         return render_template('login.html')
-    
-    # Check if login is successful
 
-    
+    # Read the username and password from the POST form
     username = request.form.get('username')
-    if not username:
-        return {"error": "Not valid username!"}, 400
-    
-        # Render the login.html page if it's a GET request
-        
+    password = request.form.get('password')
 
-    # Check if login is successful
-    username = request.form.get('username')
-    password = sha256(request.form.get('password').encode()).hexdigest()
+    # Validate the input
+    if not username or not password:
+        flash('Please enter both username and password!', 'error')
+        return render_template('login.html')
 
+    # Fetch the user from the database
     user = User.query.filter_by(username=username).first()
-    if user and user.password_hash == password:
-        # Store the username in session
-        session['username'] = username
 
-        db.session.execute(
-            update(User).where(User.id == user.id)
-        )
-        db.session.commit()
+    # Check if user exists
+    if not user:
+        flash('User does not exist!', 'error')  # Show error if the user does not exist
+        return render_template('login.html')
 
-        return redirect(url_for('home'))
+    # Hash the input password to compare with the stored password
+    hashed_password = sha256(password.encode()).hexdigest()
 
-    return {"error": "Invalid credentials!"}, 400
+    # Check if the hashed password matches the stored hashed password
+    if user.password_hash != hashed_password:
+        flash('Incorrect username or password!', 'error')  # Show error if the password is incorrect
+        return render_template('login.html')
+
+    # Clear any previous session data before setting new session data
+    session.clear()
+
+    # Set session data for the logged-in user
+    session['user_id'] = user.id
+    session['username'] = user.username  # Set the username in session
+
+    db.session.execute(
+        update(User).where(User.id == user.id)
+    )
+
+    # Redirect to home page after successful login
+    return redirect(url_for('home'))
 
 
 
@@ -186,6 +211,12 @@ def assign_quest():
     return {"success" :f"Quest '{quest.description}' assigned to user {user.username}."}, 200
 
 
+
+@app.route('/logout')
+def logout():
+    session.clear()  # Clear session on logout
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('login'))
 
 
 

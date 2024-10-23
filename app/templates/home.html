@@ -118,13 +118,17 @@
         .logout-popup h3 {
             margin: 0 0 10px;
         }
+
         .logout-popup button {
             background-color: #007BFF;
             color: #fff;
-            padding: 10px;
+            padding: 10px 20px;
             border: none;
             border-radius: 5px;
+            font-size: 1.1em;
             cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 0 5px;
         }
         .logout-popup button:hover {
             background-color: #0056b3;
@@ -145,7 +149,7 @@
         .line {
             position: absolute;
             top: calc(7% - 2px);
-            left: 0; 
+            left: 0;
             height: 4px;
             width: 100%;
             background-color: #000;
@@ -172,14 +176,16 @@
         <img src="../static/dogandcat.png" alt="Dog and Cat">
     </div>
 
+<!-- Profile Popup -->
 <div class="popup-overlay" id="popupOverlay"></div>
 <div class="profile-popup" id="profilePopup">
     <h3>Profile</h3>
-    <p>Username: {{ username }}</p>
+    <p>Username: {{ session['username'] }}</p>
     <button onclick="closeProfilePopup()">Close</button>
 </div>
 <button class="profile-button" onclick="showProfile()">Profile</button>
 
+<!-- Logout Popup -->
 <div class="logout-overlay" id="logoutOverlay"></div>
 <div class="logout-popup" id="logoutPopup">
     <h3>Logout</h3>
@@ -189,6 +195,7 @@
 </div>
 <button class="logout-button" onclick="showLogout()">Logout</button>
 
+<!-- JavaScript Code -->
 <script>
     function showProfile() {
         document.getElementById('profilePopup').style.display = 'block';
@@ -199,6 +206,7 @@
         document.getElementById('profilePopup').style.display = 'none';
         document.getElementById('popupOverlay').style.display = 'none';
     }
+
     function showLogout() {
         document.getElementById('logoutPopup').style.display = 'block';
         document.getElementById('logoutOverlay').style.display = 'block';
@@ -210,10 +218,12 @@
     }
 
     function logoutProfile() {
+        // Hides the logout popup and redirects to the homepage (or perform a real logout)
         document.getElementById('logoutPopup').style.display = 'none';
         document.getElementById('logoutOverlay').style.display = 'none';
         window.location.href = '/';
     }
 </script>
+
 </body>
 </html>

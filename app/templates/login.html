@@ -23,6 +23,7 @@
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            width: 300px;
         }
         .container form {
             display: flex;
@@ -48,6 +49,20 @@
         .container button:hover {
             background-color: #0056b3;
         }
+        .error-message {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 10px;
+            margin-bottom: 15px;
+            text-align: center; /* Center the text */
+        }
+        .success-message {
+            color: green;
+            font-size: 0.9em;
+            margin-top: 10px;
+            margin-bottom: 15px;
+            text-align: center; /* Center the text */
+        }
         @keyframes gradientAnimation {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -61,6 +76,20 @@
     <form action="/login" method="POST">
         <input type="text" name="username" placeholder="Username" required>
         <input type="password" name="password" placeholder="Password" required>
+
+        <!-- Flash messages block for errors and success -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == 'error' %}
+                    <div class="error-message">{{ message }}</div>
+                    {% elif category == 'success' %}
+                    <div class="success-message">{{ message }}</div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <button type="submit">Login</button>
     </form>
 </div>

@@ -1,6 +1,7 @@
 from flask import Flask, flash, request, redirect, url_for, render_template, session
 from hashlib import sha256
 from models import db, User, Quest, QuestCopy
+from models import db, User, Quest, QuestCopy
 from sqlalchemy import update
 import re
 
@@ -58,10 +59,8 @@ def register():
         flash('Email already registered.', 'error')
         return render_template('register.html')
 
-    # Create and save the new user
-    new_user = User(username=username, password_hash=password_hash, email=email)
-    db.session.add(new_user)
-    db.session.commit()
+    new_user = User(username=username, password_hash=password, email=email)
+    new_user.save()
 
     # Flash a success message and redirect to login page
     flash('Registration successful! Please login.', 'success')
@@ -116,6 +115,10 @@ def login():
     session['user_id'] = user.id
     session['username'] = user.username  # Set the username in session
 
+    db.session.execute(
+        update(User).where(User.id == user.id)
+    )
+
     # Redirect to home page after successful login
     return redirect(url_for('home'))
 
@@ -140,12 +143,12 @@ def user_quests():
         return "User not found."
     
     # Query the user's quest assignments
-    assignments = QuestAssignment.query.filter_by(user_id=user.id).all()
+    # assignments = QuestAssignment.query.filter_by(user_id=user.id).all()
     
     # Get the quests through the assignments
-    quests = [assignment.quest.description for assignment in assignments]
+    # quests = [assignment.quest.description for assignment in assignments]
     
-    return f"quests for {username}: " + ', '.join(quests)
+    return f"quests for {username}: " #+ ', '.join(quests)
 
 
 ######################################

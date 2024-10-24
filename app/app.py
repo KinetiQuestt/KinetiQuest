@@ -1,6 +1,6 @@
 from flask import Flask, flash, request, redirect, url_for, render_template, session
 from hashlib import sha256
-from models import db, User, Quest, QuestCopy
+from models import db, User, Quest, QuestCopy, Pet
 from sqlalchemy import update
 import re
 
@@ -61,6 +61,10 @@ def register():
     new_user = User(username=username, password_hash=password_hash, email=email)
     new_user.save()
 
+    # Create pet, most things just default for now, can apadt as needed
+    new_pet = Pet(user_id=new_user.id, pet_type="dog") 
+    new_pet.save()
+
     # Flash a success message and redirect to login page
     flash('Registration successful! Please login.', 'success')
     return redirect(url_for('login'))
@@ -118,6 +122,11 @@ def login():
         update(User).where(User.id == user.id)
     )
 
+    if user.pet:
+        session['pet_type'] = user.pet.pet_type
+        session['pet_happiness'] = user.pet.happiness
+        session['pet_hunger'] = user.pet.hunger
+
     # Redirect to home page after successful login
     return redirect(url_for('home'))
 
@@ -126,8 +135,15 @@ def login():
 @app.route('/home', methods=['GET'])
 def home():
     username = session.get('username', 'Guest')
-    return render_template('home.html', username=username)
 
+    user_id = session.get('user_id')
+    pet = Pet.query.filter_by(user_id=user_id).first()
+
+    return render_template('home.html',
+                           username=username,
+                           pet_type=pet.pet_type,
+                           pet_happiness=pet.happiness,
+                           pet_hunger=pet.hunger)
 
 
 @app.route('/user_quests/')

@@ -59,7 +59,7 @@ def register():
         flash('Email already registered.', 'error')
         return render_template('register.html')
 
-    new_user = User(username=username, password_hash=password, email=email)
+    new_user = User(username=username, password_hash=password_hash, email=email)
     new_user.save()
 
     # Flash a success message and redirect to login page

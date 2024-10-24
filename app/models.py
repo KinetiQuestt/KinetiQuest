@@ -23,6 +23,8 @@ class User(db.Model):
     #Quests
     quests = db.relationship('QuestCopy', backref='assigned_user', lazy='joined', foreign_keys='QuestCopy.assigned_to')
 
+    #Pet, just one for now
+    pet = db.relationship('Pet', backref='owner', uselist=False)
 
     
     # Representation of User (can be more flushed out)
@@ -120,6 +122,49 @@ class QuestCopy(db.Model):
 
     def delete(self):
         db.session.delete(self)
+        db.session.commit()
+
+class Pet(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    pet_type = db.Column(db.String(50), nullable=False)
+    name = db.Column(db.String(50), nullable=False, default="Spot")
+    happiness = db.Column(db.Integer, nullable=False, default=100)
+    hunger = db.Column(db.Integer, nullable=False, default=100)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(tz=pytz.utc))
+    updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(tz=pytz.utc), onupdate=lambda: datetime.now(tz=pytz.utc))
+
+    # user = db.relationship('User', backref='pet', uselist=False)
+
+    def __repr__(self):
+        return f"<Pet(id={self.id}, name={self.name}, pet_type={self.pet_type}, health={self.happiness}, hunger={self.hunger})>"
+
+    def __init__(self, user_id, pet_type, name="Spot", hunger=100, happiness=100):
+        self.user_id = user_id
+        self.pet_type = pet_type
+        self.name = name
+        self.hunger = hunger
+        self.happiness = happiness
+
+    def feed(self, amount):
+        self.hunger = max(0, self.hunger - amount)
+        self.update()
+
+    def play(self, amount):
+        self.happiness = min(100, self.happiness + amount)
+        self.update()
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def update(self):
+        self.updated_at = datetime.now(tz=pytz.utc)
         db.session.commit()
 
 

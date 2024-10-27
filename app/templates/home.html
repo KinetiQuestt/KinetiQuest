@@ -31,18 +31,18 @@
     <style>
         .profile-button {
             position: fixed;
-            top: 30px;
-            right: 150px;
+            top: 3%;
+            right: 7%;
             background-color: #a37b5b;
             color: #fff;
-            padding: 10px 20px;
+            padding: 0.5em 1em;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.3s ease;
             font-family: Arial, sans-serif;
             font-size: 1.2em;
-            z-index: 1000;
+            z-index: 900;
         }
         .profile-button:hover {
             background-color: #a37b5b;
@@ -50,8 +50,8 @@
 
         .logout-button {
             position: fixed;
-            top: 30px;
-            right: 20px;
+            top: 3%;
+            right: 1%;
             background-color: #a37b5b;
             color: #fff;
             padding: 10px 20px;
@@ -61,7 +61,7 @@
             transition: background-color 0.3s ease;
             font-family: Arial, sans-serif;
             font-size: 1.2em;
-            z-index: 1000;
+            z-index: 900;
         }
 
         .logout-button:hover {
@@ -75,12 +75,12 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background-color: #fff;
-            padding: 30px;
+            padding: 2em;
             border-radius: 15px;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
             text-align: center;
             display: none;
-            z-index: 1000;
+            z-index: 999;
         }
         .profile-popup h3 {
             margin: 0 0 15px;
@@ -89,7 +89,7 @@
         .profile-popup button {
             background-color: #d6bfa3;
             color: #fff;
-            padding: 15px;
+            padding: 0.5em;
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -106,7 +106,7 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
             display: none;
-            z-index: 500;
+            z-index: 999;
         }
 
         .logout-popup {
@@ -115,7 +115,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background-color: #fff;
-            padding: 30px;
+            padding: 2em;
             border-radius: 15px;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
             text-align: center;
@@ -130,7 +130,7 @@
         .logout-popup button {
             background-color: #d6bfa3;
             color: #fff;
-            padding: 15px 30px;
+            padding: 0.5em 1em;
             border: none;
             border-radius: 8px;
             font-size: 1.2em;
@@ -149,26 +149,27 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
             display: none;
-            z-index: 500;
+            z-index: 1000;
         }
     .happiness-area {
-            width: 690px;
-            padding: 20px;
+            width: 29em;
+            height: 9.5em;
+            padding: 1em;
             background-color: #d6bfa3;
             border-radius: 10px;
-            margin-top: 0px;
+            margin-top: 0.5em;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
             align-self: flex-start;
         }
 
         .happiness-bar, .hunger-bar {
-            margin: 10px 0;
-            font-size: 1.5em;
+            margin: 0.5em 0;
+            font-size: 1em;
         }
 
         progress {
             width: 100%;
-            height: 20px;
+            height: 1.5em;
         }
 
     </style>
@@ -176,7 +177,7 @@
     <style>
         .line {
             position: fixed;
-            top: 100px;
+            top: 10.5%;
             left: 0;
             height: 6px;
             width: 100%;
@@ -186,44 +187,42 @@
 
         .container img {
             position: fixed;
-            top: 10px;
-            left: 10px;
-            width: 100px;
+            top: 1%;
+            left: 1%;
+            width: 5%;
             height: auto;
-            z-index: 1000;
+            z-index: 999;
         }
 
-        .content-wrapper {
-            width: 95%;
-            max-width: 1600px;
-            margin-top: 150px;
+        .content-wrapper { margin-top: 7em;
             display: flex;
             flex-direction: row;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 30px;
+            gap: 4em;
         }
 
         .main-content {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: -5em;
         }
 
         .pet-area {
             background-color: #a37b5b;
-            padding: 15px;
-            border-radius: 10px;
+            padding: 0.5em;
+            border-radius: 1em;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            width: 700px;
+            width: 30em;
+            height: 30em;
             position: relative;
         }
 
         .todo-list-title {
             text-align: left;
-            margin-left: 270px;
+            margin-left: auto;
             font-size: 3em;
-            margin-bottom: 20px;
+            margin-bottom: 0.5em;
             color: #a37b5b;
             text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
             font-family: Arial, sans-serif;
@@ -232,17 +231,17 @@
         .todo-lists {
             display: flex;
             flex-direction: column;
-            width: 42%;
+            width: 50%;
         }
 
         .todo-list, .weekly-todo-list {
             background-color: #d6bfa3;
-            padding: 40px;
-            border-radius: 10px;
+            padding: 2em;
+            border-radius: 1em;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            width: 100%;
+            width: 150%;
             position: relative;
-            margin-top: 20px;
+            margin-top: 1em;
         }
 
         .pet-display {
@@ -250,63 +249,75 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 700px;
-            height: 600px;
+            width: 100%;
+            max-width: 30em;
+            height: 30em;
             position: relative;
         }
 
         .food-area {
-            width: 690px;
-            padding: 20px;
+            width: 29em;
+            padding: 1em;
             background-color: #d6bfa3;
             border-radius: 10px;
             display: flex;
             justify-content: space-evenly;
             align-items: center;
-            gap: 20px;
-            margin-top: 0px;
+            gap: 1em;
+            margin-top: 1em;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
         }
 
         .food-item {
-            width: 120px;
-            height: 120px;
+            width: 20%;
+            max-width: 4em;
+            height: 4em;
             background-image: url('../static/food.png');
             background-size: cover;
             cursor: grab;
         }
+
         .food-drop-zone {
-            width: 180px;
-            height: 120px;
-            border: 3px dashed #ccc;
+            width: 15%;
+            max-width: 5em;
+            height: 4em;
+            border: 0.2em dashed #ccc;
             display: flex;
             align-items: center;
             justify-content: center;
         }
+
         .todo-list h2, .weekly-todo-list h2 {
             text-align: center;
             font-size: 2.5em;
+            margin-top: 0.5em;
+
         }
+
         .tasks {
-            margin-top: 40px;
+            margin-top: 1em;
         }
+
         .task {
             display: flex;
             align-items: center;
-            margin-bottom: 30px;
-            font-size: 1.8em;
+            margin-bottom: 1em;
+            font-size: 1.2em;
         }
+
         .task input[type="checkbox"] {
-            margin-right: 20px;
+            margin-right: 1em;
         }
+
         .input-task {
-            margin-top: 20px;
+            margin-top: 1em;
             display: flex;
             align-items: center;
             justify-content: flex-end;
         }
+
         .input-task button {
-            padding: 10px 20px;
+            padding: 0.5em 1em;
             font-size: 1.2em;
             background-color: #a37b5b;
             color: #fff;
@@ -318,43 +329,49 @@
             transition: background-color 0.3s ease;
             z-index: 2;
         }
+
         .input-task button:hover {
             background-color: #0056b3;
         }
+
         .task-popup {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background-color: #fff;
-            padding: 30px;
-            border-radius: 15px;
+            padding: 2em;
+            border-radius: 1em;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
             text-align: center;
             display: none;
             z-index: 1000;
         }
+
         .task-popup input[type="text"] {
             width: 80%;
-            padding: 10px;
+            padding: 1em;
             font-size: 1.2em;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            margin-bottom: 15px;
+            border-radius: 5em;
+            border: 0.1em solid #ccc;
+            margin-bottom: 1em;
         }
+
         .task-popup button {
-            padding: 10px 20px;
+            padding: 0.5em 1em;
             font-size: 1.2em;
             background-color: #d6bfa3;
             color: #fff;
             border: none;
-            border-radius: 8px;
+            border-radius: 2em;
             cursor: pointer;
-            margin: 10px;
+            margin: 0.5em;
         }
+
         .task-popup button:hover {
             background-color: #0056b3;
         }
+
         .task-overlay {
             position: fixed;
             top: 0;
@@ -365,6 +382,12 @@
             display: none;
             z-index: 500;
         }
+
+        .dimmed {
+            filter: brightness(90%);
+            pointer-events: none;
+        }
+
     </style>
 </head>
 <body>
@@ -495,18 +518,30 @@
 
     function showLogout() {
         document.getElementById('logoutPopup').style.display = 'block';
-        document.getElementById('logoutOverlay').style.display = 'block';
+        document.getElementById('popupOverlay').style.display = 'block';
     }
 
     function closeLogoutPopup() {
         document.getElementById('logoutPopup').style.display = 'none';
-        document.getElementById('logoutOverlay').style.display = 'none';
+        document.getElementById('popupOverlay').style.display = 'none';
     }
 
     function logoutProfile() {
         document.getElementById('logoutPopup').style.display = 'none';
-        document.getElementById('logoutOverlay').style.display = 'none';
+        document.getElementById('popupOverlay').style.display = 'none';
         window.location.href = '/';
+    }
+
+    function dimContent(dim) {
+        const dimClass = 'dimmed';
+        const elementsToDim = document.querySelectorAll('body > *:not(#popupOverlay):not(#profilePopup):not(#logoutPopup)');
+        elementsToDim.forEach(element => {
+            if (dim) {
+                element.classList.add(dimClass);
+            } else {
+                element.classList.remove(dimClass);
+            }
+        });
     }
 
     function allowDrop(ev) {

@@ -135,15 +135,16 @@ def login():
 @app.route('/home', methods=['GET'])
 def home():
     username = session.get('username', 'Guest')
-
     user_id = session.get('user_id')
     pet = Pet.query.filter_by(user_id=user_id).first()
+    user_quests = QuestCopy.query.filter_by(assigned_to=user_id).all()
 
     return render_template('home.html',
                            username=username,
                            pet_type=pet.pet_type,
                            pet_happiness=pet.happiness,
-                           pet_hunger=pet.hunger)
+                           pet_hunger=pet.hunger,
+                           user_quests=user_quests)
 
 
 @app.route('/user_quests/')
@@ -225,6 +226,34 @@ def assign_quest():
     
     return {"success" :f"Quest '{quest.description}' assigned to user {user.username}."}, 200
 
+@app.route('/api/add_task', methods=['POST'])
+def add_task():
+    """ API request to add a quest for the logged-in user.
+        Post:
+            String -> task_description = description of the task
+            String -> task_type = type of task ('daily' or 'weekly')
+
+        Return:
+            String -> Success/Error
+            Int -> Return Code
+    """
+    task_description = request.form.get('task_description')
+    task_type = request.form.get('task_type')
+    user_id = session.get('user_id')
+
+    if not task_description or not task_type or not user_id:
+        return {"error": "Missing field in POST!"}, 400
+
+    # Create a new quest
+    new_quest = Quest(description=task_description)
+    new_quest.save()
+
+    # Create a quest copy for the user
+    quest_copy = QuestCopy(quest_id=new_quest.id, quest_type=task_type)
+    quest_copy.assign_quest(User.query.get(user_id))
+    quest_copy.save()
+
+    return {"success": "Task added successfully!"}, 200
 
 
 @app.route('/logout')

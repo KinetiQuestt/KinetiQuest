@@ -101,15 +101,19 @@ class QuestCopy(db.Model):
 
     status = db.Column(db.String(20), default='unstarted', nullable=False)
     reward = db.Column(db.Integer, nullable=False)
+    quest_type = db.Column(db.String(10), nullable=False)
 
     start_time = db.Column(db.DateTime, default=lambda: datetime.now(tz=pytz.utc))
     end_time = db.Column(db.DateTime)
 
 
-    def __init__(self, quest_id, reward=0, duration_hours=2):
+    def __init__(self, quest_id, reward=0, duration_hours=2, quest_type="daily"):
         self.quest_id = quest_id
         self.reward = reward
+        self.quest_type = quest_type
         # some sort of calculation on the end time of the quest
+        # needed to add here too to avoid type error
+        self.start_time = datetime.now()
         self.end_time = self.start_time + timedelta(hours=duration_hours)
 
     def assign_quest(self, user):

@@ -251,6 +251,61 @@ def add_task():
 
     return {"success": "Task added successfully!"}, 200
 
+@app.route('/api/update_task', methods=['POST'])
+def update_task():
+    """ API request to update an existing task.
+        Post:
+            Int -> task_id = ID of the task to be updated
+            String -> new_description = updated description of the task
+
+        Return:
+            String -> Success/Error
+            Int -> Return Code
+    """
+    task_id = request.form.get('task_id')
+    new_description = request.form.get('new_description')
+
+    # Validate input
+    if not task_id or not new_description:
+        return {"error": "Missing field in POST!"}, 400
+
+    # Find the task
+    task = Quest.query.get(task_id)
+    if not task:
+        return {"error": "Task not found!"}, 404
+
+    # Update the task description
+    task.description = new_description
+    db.session.commit()
+
+    return {"success": "Task updated successfully!"}, 200
+
+@app.route('/api/delete_task', methods=['POST'])
+def delete_task():
+    """ API request to delete a task.
+        Post:
+            Int -> task_id = ID of the task to be deleted
+
+        Return:
+            String -> Success/Error
+            Int -> Return Code
+    """
+    task_id = request.form.get('task_id')
+
+    # Validate input
+    if not task_id:
+        return {"error": "Missing task ID in POST!"}, 400
+
+    # Find the task
+    task = Quest.query.get(task_id)
+    if not task:
+        return {"error": "Task not found!"}, 404
+
+    # Delete the task
+    db.session.delete(task)
+    db.session.commit()
+
+    return {"success": "Task deleted successfully!"}, 200
 
 @app.route('/logout')
 def logout():

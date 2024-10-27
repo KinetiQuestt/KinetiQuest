@@ -422,11 +422,12 @@
                 <hr style="border: 1px solid #d6b588;">
             </div>
             <div class="tasks" id="dailyTasks">
-
-
-                <!-- Additional tasks here smile -->
+                {% for quest in user_quests %}
+                    {% if quest.quest_type == 'daily' %}
+                        <div class="task">{{ quest.description }}</div>
+                    {% endif %}
+                {% endfor %}
             </div>
-
         </div>
 
         <!-- Weekly To-do List Area -->
@@ -440,9 +441,12 @@
                 <hr style="border: 1px solid #d6b588;">
             </div>
             <div class="tasks" id="weeklyTasks">
-                <!-- Weekly tasks will be appended here -->
+                {% for quest in user_quests %}
+                    {% if quest.quest_type == 'weekly' %}
+                        <div class="task">{{ quest.description }}</div>
+                    {% endif %}
+                {% endfor %}
             </div>
-
         </div>
     </div>
 </div>
@@ -530,21 +534,29 @@
     }
 
     function addTask() {
-        const taskInput = document.getElementById('taskInput');
-        if (taskInput.value.trim() !== "") {
-            let taskList;
-            if (currentTaskType === 'daily') {
-                taskList = document.getElementById('dailyTasks');
-            } else if (currentTaskType === 'weekly') {
-                taskList = document.getElementById('weeklyTasks');
+        const taskInput = document.getElementById('taskInput').value;
+        const taskType = currentTaskType;
+        
+        fetch('/api/add_task', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `task_description=${encodeURIComponent(taskInput)}&task_type=${encodeURIComponent(taskType)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error);
             }
-            const taskDiv = document.createElement('div');
-            taskDiv.className = 'task';
-            taskDiv.innerHTML = `<input type="checkbox"><label>${taskInput.value}</label>`;
-            taskList.appendChild(taskDiv);
-            taskInput.value = "";
-            closeTaskPopup();
-        }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+
+        closeTaskPopup();
     }
 </script>
 

@@ -26,7 +26,7 @@ class User(db.Model):
     #Pet, just one for now
     pet = db.relationship('Pet', backref='owner', uselist=False)
 
-    
+
     # Representation of User (can be more flushed out)
     def __repr__(self) -> str:
         return f"<User(id={self.id}, username={self.username}, account_creation={self.account_creation}, account_updated={self.account_updated})>"
@@ -55,7 +55,7 @@ class Quest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(200), nullable=False)
     assigned_to = db.Column(db.Integer, db.ForeignKey('user.id'))
-    
+
     status = db.Column(db.String(20), default='unstarted', nullable=False)
     reward = db.Column(db.Integer, nullable=False, default=0)
     quest_type = db.Column(db.String(10), nullable=False)

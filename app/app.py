@@ -62,7 +62,7 @@ def register():
     new_user.save()
 
     # Create pet, most things just default for now, can apadt as needed
-    new_pet = Pet(user_id=new_user.id, pet_type="dog") 
+    new_pet = Pet(user_id=new_user.id, pet_type="dog")
     new_pet.save()
 
     # Flash a success message and redirect to login page
@@ -157,13 +157,13 @@ def user_quests():
     user = User.query.filter_by(username=username).first()
     if not user:
         return "User not found."
-    
+
     # Query the user's quest assignments
     # assignments = QuestAssignment.query.filter_by(user_id=user.id).all()
-    
+
     # Get the quests through the assignments
     # quests = [assignment.quest.description for assignment in assignments]
-    
+
     return f"quests for {username}: " #+ ', '.join(quests)
 
 
@@ -190,7 +190,7 @@ def create_quest():
     weight = request.form.get('weight')
     if not description:
         return {"Error" : "Missing field in POST!"}, 400
-    
+
     # Create and store the new quest
     new_quest = Quest(description=description, user_id=user_id, weight=weight)
     db.session.add(new_quest)
@@ -212,19 +212,19 @@ def assign_quest():
     """
     username = request.form.get('username')
     quest_id = request.form.get('quest_id')
-    
+
     # Find the user and quest
     user = User.query.filter_by(username=username).first()
     quest = Quest.query.get(quest_id)
-    
+
     if not user or not quest:
         return {"error" :f"User or quest not found!"}, 400
-    
+
     # Create a new QuestAssignment to link the user and the quest
     assignment = QuestAssignment(user_id=user.id, quest_id=quest.id)
     db.session.add(assignment)
     db.session.commit()
-    
+
     return {"success" :f"Quest '{quest.description}' assigned to user {user.username}."}, 200
 
 @app.route('/api/add_task', methods=['POST'])

@@ -232,7 +232,7 @@
             padding: 2em;
             border-radius: 1em;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            width: 100%;
+            width: 150%;
             position: relative;
             margin-top: 1em;
         }
@@ -531,12 +531,12 @@
             <div class="scrollable-tasks" id="dailyTasks">
                 {% for quest in user_quests %}
                 {% if quest.quest_type == 'daily' %}
-                    <div class="task-wrapper">
-                        <div class="task" contenteditable="true" data-task-id="{{ quest.id }}">
-                            {{ quest.description }}
-                        </div>
-                        <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
+                <div class="task-wrapper">
+                    <div class="task" contenteditable="true" data-task-id="{{ quest.id }}">
+                        {{ quest.description }}
                     </div>
+                    <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
+                </div>
                 {% endif %}
                 {% endfor %}
             </div>
@@ -555,12 +555,12 @@
             <div class="scrollable-tasks" id="weeklyTasks">
                 {% for quest in user_quests %}
                 {% if quest.quest_type == 'weekly' %}
-                    <div class="task-wrapper">
-                        <div class="task" contenteditable="true" data-task-id="{{ quest.id }}">
-                            {{ quest.description }}
-                        </div>
-                        <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
+                <div class="task-wrapper">
+                    <div class="task" contenteditable="true" data-task-id="{{ quest.id }}">
+                        {{ quest.description }}
                     </div>
+                    <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
+                </div>
                 {% endif %}
                 {% endfor %}
             </div>

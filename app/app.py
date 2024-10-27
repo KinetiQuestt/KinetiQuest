@@ -1,6 +1,6 @@
 from flask import Flask, flash, request, redirect, url_for, render_template, session
 from hashlib import sha256
-from models import db, User, Quest, QuestCopy, Pet
+from models import db, User, Quest, Pet
 from sqlalchemy import update
 import re
 
@@ -137,7 +137,7 @@ def home():
     username = session.get('username', 'Guest')
     user_id = session.get('user_id')
     pet = Pet.query.filter_by(user_id=user_id).first()
-    user_quests = QuestCopy.query.filter_by(assigned_to=user_id).all()
+    user_quests = Quest.query.filter_by(assigned_to=user_id).all()
 
     return render_template('home.html',
                            username=username,
@@ -178,23 +178,24 @@ def create_quest():
         Post:
             String -> description = description of quest
             Int -> weight = value of quest
+            Int -> user_id = user ID to assign the quest to
 
         Return:
             String -> Success/Error
             Int -> Return Code
     """
 
-    # Check for correct permissions for call
+    # stopped using this, but kept changes as they would be needed
     description = request.form.get('description')
     weight = request.form.get('weight')
-    if not description or not weight:
+    if not description:
         return {"Error" : "Missing field in POST!"}, 400
     
     # Create and store the new quest
-    new_quest = Quest(description=description, weight=weight)
+    new_quest = Quest(description=description, user_id=user_id, weight=weight)
     db.session.add(new_quest)
     db.session.commit()
-    
+
     return {"success" : "Quest created successfully!", "quest": new_quest.__repr__()}, 200
 
 @app.route('/api/assign_quest', methods=['POST'])
@@ -245,13 +246,8 @@ def add_task():
         return {"error": "Missing field in POST!"}, 400
 
     # Create a new quest
-    new_quest = Quest(description=task_description)
+    new_quest = Quest(description=task_description, user_id=user_id, quest_type=task_type)
     new_quest.save()
-
-    # Create a quest copy for the user
-    quest_copy = QuestCopy(quest_id=new_quest.id, quest_type=task_type)
-    quest_copy.assign_quest(User.query.get(user_id))
-    quest_copy.save()
 
     return {"success": "Task added successfully!"}, 200
 

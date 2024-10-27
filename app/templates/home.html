@@ -424,7 +424,7 @@
             <div class="tasks" id="dailyTasks">
                 {% for quest in user_quests %}
                     {% if quest.quest_type == 'daily' %}
-                        <div class="task">{{ quest.quest.description }}</div>
+                        <div class="task">{{ quest.description }}</div>
                     {% endif %}
                 {% endfor %}
             </div>
@@ -443,7 +443,7 @@
             <div class="tasks" id="weeklyTasks">
                 {% for quest in user_quests %}
                     {% if quest.quest_type == 'weekly' %}
-                        <div class="task">{{ quest.quest.description }}</div>
+                        <div class="task">{{ quest.description }}</div>
                     {% endif %}
                 {% endfor %}
             </div>

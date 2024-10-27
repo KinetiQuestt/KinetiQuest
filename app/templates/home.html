@@ -194,7 +194,8 @@
             z-index: 999;
         }
 
-        .content-wrapper { margin-top: 7em;
+        .content-wrapper {
+            margin-top: 7em;
             display: flex;
             flex-direction: row;
             justify-content: space-between;
@@ -218,16 +219,6 @@
             position: relative;
         }
 
-        .todo-list-title {
-            text-align: left;
-            margin-left: auto;
-            font-size: 3em;
-            margin-bottom: 0.5em;
-            color: #a37b5b;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-            font-family: Arial, sans-serif;
-        }
-
         .todo-lists {
             display: flex;
             flex-direction: column;
@@ -235,13 +226,42 @@
         }
 
         .todo-list, .weekly-todo-list {
+            max-height: 300px;
+            overflow-y: auto;
             background-color: #d6bfa3;
             padding: 2em;
             border-radius: 1em;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            width: 150%;
+            width: 100%;
             position: relative;
             margin-top: 1em;
+        }
+
+        .scrollable-tasks {
+            display: block;
+            flex-wrap: wrap;
+            height: 300px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 1em;
+        }
+
+        .scrollable-tasks::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .scrollable-tasks::-webkit-scrollbar-track {
+            background: #f1e1c7;
+            border-radius: 10px;
+        }
+
+        .scrollable-tasks::-webkit-scrollbar-thumb {
+            background: #a37b5b;
+            border-radius: 10px;
+        }
+
+        .scrollable-tasks::-webkit-scrollbar-thumb:hover {
+            background: #8a634b;
         }
 
         .pet-display {
@@ -299,10 +319,25 @@
         }
 
         .task {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1em;
-            font-size: 1.2em;
+            flex-grow: 1;
+            max-width: calc(100% - 2em);
+            overflow-wrap: break-word;
+            word-break: break-word;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            padding: 0.5em;
+            outline: none;
+            border: none;
+            background: none;
+            cursor: text;
+        }
+
+        .task:focus {
+            max-height: 2em;
+            overflow-y: auto;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
         }
 
         .task input[type="checkbox"] {
@@ -350,11 +385,12 @@
 
         .task-popup input[type="text"] {
             width: 80%;
-            padding: 1em;
+            padding: 0.5em;
             font-size: 1.2em;
             border-radius: 5em;
             border: 0.1em solid #ccc;
             margin-bottom: 1em;
+            box-sizing: border-box;
         }
 
         .task-popup button {
@@ -381,6 +417,55 @@
             background: rgba(0, 0, 0, 0.5);
             display: none;
             z-index: 500;
+        }
+
+        .delete-button {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 0.2em 0.6em;
+            font-size: 1em;
+            line-height: 1em;
+            display: none;
+            z-index: 1;
+            transition: background-color 0.3s;
+        }
+
+        .task-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 8px;
+            margin-bottom: 1em;
+        }
+
+        .task-wrapper:hover .delete-btn {
+            display: block;
+        }
+
+        .delete-btn {
+            position: absolute;
+            right: 10px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 0.2em 0.6em;
+            font-size: 1em;
+            display: none;
+            transition: background-color 0.3s;
+        }
+
+        .delete-btn:hover {
+            background-color: #c9302c;
         }
 
         .dimmed {
@@ -433,41 +518,50 @@
 
     <!-- To-do Lists Area -->
     <div class="todo-lists">
-        <h2 class="todo-list-title">To-Do List</h2>
         <!-- Daily To-do List Area -->
-        <div class="todo-list" style="padding-top: 20px; position: relative;">
+        <div class="todo-list">
             <div class="input-task" style="position: absolute; top: 20px; right: 40px;">
                 <button onclick="showTaskPopup('daily')">Add Task</button>
             </div>
 
-            <div style="position: relative;">
-                <h2 style="text-align: left; margin-bottom: 10px;">Daily Tasks</h2>
-                <hr style="border: 1px solid #d6b588;">
-            </div>
-            <div class="tasks" id="dailyTasks">
+            <h2 style="text-align: left; margin-bottom: 10px;">Daily Tasks</h2>
+            <hr style="border: 1px solid #d6b588;">
+
+            <!-- Scrollable task list -->
+            <div class="scrollable-tasks" id="dailyTasks">
                 {% for quest in user_quests %}
-                    {% if quest.quest_type == 'daily' %}
-                        <div class="task">{{ quest.description }}</div>
-                    {% endif %}
+                {% if quest.quest_type == 'daily' %}
+                    <div class="task-wrapper">
+                        <div class="task" contenteditable="true" data-task-id="{{ quest.id }}">
+                            {{ quest.description }}
+                        </div>
+                        <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
+                    </div>
+                {% endif %}
                 {% endfor %}
             </div>
         </div>
 
         <!-- Weekly To-do List Area -->
-        <div class="weekly-todo-list" style="padding-top: 20px; position: relative;">
+        <div class="weekly-todo-list">
             <div class="input-task" style="position: absolute; top: 20px; right: 40px;">
                 <button onclick="showTaskPopup('weekly')">Add Task</button>
             </div>
 
-            <div style="position: relative;">
-                <h2 style="text-align: left; margin-bottom: 10px;">Weekly Tasks</h2>
-                <hr style="border: 1px solid #d6b588;">
-            </div>
-            <div class="tasks" id="weeklyTasks">
+            <h2 style="text-align: left; margin-bottom: 10px;">Weekly Tasks</h2>
+            <hr style="border: 1px solid #d6b588;">
+
+            <!-- Scrollable task list -->
+            <div class="scrollable-tasks" id="weeklyTasks">
                 {% for quest in user_quests %}
-                    {% if quest.quest_type == 'weekly' %}
-                        <div class="task">{{ quest.description }}</div>
-                    {% endif %}
+                {% if quest.quest_type == 'weekly' %}
+                    <div class="task-wrapper">
+                        <div class="task" contenteditable="true" data-task-id="{{ quest.id }}">
+                            {{ quest.description }}
+                        </div>
+                        <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
+                    </div>
+                {% endif %}
                 {% endfor %}
             </div>
         </div>
@@ -568,10 +662,49 @@
         document.getElementById('taskOverlay').style.display = 'none';
     }
 
+    document.addEventListener('DOMContentLoaded', function() {
+        const taskInput = document.getElementById('taskInput');
+
+        taskInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addTask();
+            }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.task').forEach(taskElement => {
+            taskElement.addEventListener('focus', function() {
+                this.dataset.originalValue = this.innerText;
+            });
+
+            taskElement.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    this.innerText = this.dataset.originalValue;
+                    this.blur(); // Remove focus from the task
+                } else if (event.key === 'Enter') {
+                    event.preventDefault(); // Prevent newline insertion
+                    this.blur();
+                }
+            });
+
+            taskElement.addEventListener('blur', function() {
+                if (this.innerText !== this.dataset.originalValue) {
+                    updateTask(this.dataset.taskId, this.innerText);
+                }
+            });
+        });
+    });
+
     function addTask() {
-        const taskInput = document.getElementById('taskInput').value;
+        const taskInputElement = document.getElementById('taskInput');
+        const taskInput = taskInputElement.value;
         const taskType = currentTaskType;
-        
+        if (!taskInput.trim()) {
+            alert("Task description cannot be empty.");
+            return;
+        }
         fetch('/api/add_task', {
             method: 'POST',
             headers: {
@@ -582,16 +715,83 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                const taskList = document.getElementById(taskType === 'daily' ? 'dailyTasks' : 'weeklyTasks');
+                const newTaskDiv = document.createElement('div');
+                newTaskDiv.classList.add('task');
+                newTaskDiv.textContent = taskInput;
+                newTaskDiv.setAttribute('contenteditable', 'true');
+                newTaskDiv.dataset.taskId = data.task_id;
+
+                const deleteButton = document.createElement('button');
+                deleteButton.classList.add('delete-btn');
+                deleteButton.innerHTML = '&times;';
+                deleteButton.onclick = () => deleteTask(data.task_id);
+                newTaskDiv.appendChild(deleteButton);
+
+                taskList.appendChild(newTaskDiv);
+
+                // Clear the input field after adding the task
+                taskInputElement.value = '';
             } else {
-                alert(data.error);
+                alert('Failed to add task: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error occurred while making the request:', error);
+            alert('An error occurred while adding the task.');
+        });
+        closeTaskPopup();
+    }
+
+    function updateTask(taskId, newDescription) {
+        if (!newDescription.trim()) {
+            alert("Task description cannot be empty.");
+            return;
+        }
+        fetch('/api/update_task', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `task_id=${encodeURIComponent(taskId)}&new_description=${encodeURIComponent(newDescription)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Task updated successfully.');
+            } else {
+                alert('Failed to update task: ' + data.error);
             }
         })
         .catch(error => {
             console.error('Error:', error);
+            alert('An error occurred while updating the task.');
         });
+    }
 
-        closeTaskPopup();
+    function deleteTask(taskId) {
+        fetch('/api/delete_task', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `task_id=${encodeURIComponent(taskId)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const taskElement = document.querySelector(`.task[data-task-id='${taskId}']`);
+                if (taskElement) {
+                    taskElement.remove();
+                }
+            } else {
+                alert('Failed to delete task: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the task.');
+        });
     }
 </script>
 

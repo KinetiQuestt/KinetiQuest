@@ -1,4 +1,5 @@
 from flask import Flask, flash, request, redirect, url_for, render_template, session
+from flask_restx import Api
 from hashlib import sha256
 from models import db, User, Quest, QuestCopy, Pet
 from sqlalchemy import update
@@ -10,6 +11,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
 email_pattern = re.compile(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
 
 db.init_app(app)
+# api = Api(app)
 
 
 
@@ -136,8 +138,12 @@ def login():
 def home():
     username = session.get('username', 'Guest')
 
+    if not username or username == 'Guest':
+        return redirect(url_for('login'))
+
     user_id = session.get('user_id')
     pet = Pet.query.filter_by(user_id=user_id).first()
+
 
     return render_template('home.html',
                            username=username,
@@ -219,9 +225,9 @@ def assign_quest():
         return {"error" :f"User or quest not found!"}, 400
     
     # Create a new QuestAssignment to link the user and the quest
-    assignment = QuestAssignment(user_id=user.id, quest_id=quest.id)
-    db.session.add(assignment)
-    db.session.commit()
+    # assignment = QuestAssignment(user_id=user.id, quest_id=quest.id)
+    # db.session.add(assignment)
+    # db.session.commit()
     
     return {"success" :f"Quest '{quest.description}' assigned to user {user.username}."}, 200
 

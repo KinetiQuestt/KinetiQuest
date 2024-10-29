@@ -3,6 +3,8 @@ from hashlib import sha256
 from models import db, User, Quest, Pet
 from sqlalchemy import update
 import re
+from datetime import datetime
+import pytz
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -249,7 +251,7 @@ def add_task():
     new_quest = Quest(description=task_description, user_id=user_id, quest_type=task_type)
     new_quest.save()
 
-    return {"success": "Task added successfully!"}, 200
+    return {"success": "Task added successfully!", "task_id": new_quest.id}, 200
 
 @app.route('/api/update_task', methods=['POST'])
 def update_task():
@@ -282,7 +284,7 @@ def update_task():
 
 @app.route('/api/delete_task', methods=['POST'])
 def delete_task():
-    """ API request to delete a task.
+    """ API request to mark a task as deleted.
         Post:
             Int -> task_id = ID of the task to be deleted
 
@@ -301,18 +303,88 @@ def delete_task():
     if not task:
         return {"error": "Task not found!"}, 404
 
-    # Delete the task
-    db.session.delete(task)
-    db.session.commit()
+    # Mark the task as deleted instead of actually deleting it
+    try:
+        task.is_deleted = True
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return {"error": f"Failed to delete task. Error: {str(e)}"}, 500
 
-    return {"success": "Task deleted successfully!"}, 200
+    return {"success": "Task marked as deleted."}, 200
+
+@app.route('/api/complete_task', methods=['POST'])
+def complete_task():
+    """ API request to mark a task as completed.
+        Post:
+            Int -> task_id = ID of the task to be marked as complete
+
+        Return:
+            String -> Success/Error
+            Int -> Return Code
+    """
+    task_id = request.form.get('task_id')
+
+    # Validate input
+    if not task_id:
+        app.logger.error("Task ID is missing in the request.")
+        return {"error": "Missing task ID in POST!"}, 400
+
+    try:
+        task_id = int(task_id)  # Ensure an integer
+    except ValueError:
+        app.logger.error("Task ID must be an integer.")
+        return {"error": "Invalid task ID format!"}, 400
+
+    # Find the task
+    task = Quest.query.get(task_id)
+    if not task:
+        app.logger.error(f"Task with ID {task_id} not found.")
+        return {"error": "Task not found!"}, 404
+
+    # Mark the task as completed
+    try:
+        task.status = 'completed'
+        task.end_time = datetime.now(tz=pytz.utc)
+        app.logger.info(f"Task with ID {task_id} status set to completed. Attempting to commit...")
+        db.session.commit()
+        app.logger.info(f"Task with ID {task_id} successfully committed as completed.")
+    except Exception as e:
+        app.logger.error(f"Error occurred while marking task as completed: {e}", exc_info=True)
+        db.session.rollback()  # Rollback in case of an error
+        return {"error": f"Failed to complete task. Error: {str(e)}"}, 500
+
+    return {"success": "Task marked as completed!"}, 200
+
+@app.route('/api/completed_tasks', methods=['GET'])
+def completed_tasks():
+    user_id = session.get('user_id')
+    if not user_id:
+        return {"error": "Unauthorized"}, 401
+
+    # Fetch all completed tasks for the user
+    completed_tasks = Quest.query.filter_by(assigned_to=user_id, status='completed').all()
+
+    tasks_data = [
+        {
+            "description": task.description,
+            "completed_at": task.end_time.isoformat(),
+            "quest_type": task.quest_type,
+            "is_deleted": False
+        }
+        for task in completed_tasks
+    ]
+    return {"tasks": tasks_data}
+
 
 @app.route('/logout')
 def logout():
-    session.clear()  # Clear session on logout
-    flash('You have been logged out.', 'info')
+    if 'user_id' in session:
+        session.clear()
+        flash('You have been logged out successfully.', 'info')
+    else:
+        flash('You are not logged in.', 'warning')
     return redirect(url_for('login'))
-
 
 
 if __name__ == "__main__":

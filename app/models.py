@@ -59,6 +59,7 @@ class Quest(db.Model):
     status = db.Column(db.String(20), default='unstarted', nullable=False)
     reward = db.Column(db.Integer, nullable=False, default=0)
     quest_type = db.Column(db.String(10), nullable=False)
+    is_deleted = db.Column(db.Boolean, default=False)
 
     start_time = db.Column(db.DateTime, default=lambda: datetime.now(tz=pytz.utc))
     end_time = db.Column(db.DateTime)

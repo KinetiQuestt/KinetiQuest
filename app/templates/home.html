@@ -67,6 +67,44 @@
         .logout-button:hover {
             background-color: #a37b5b;
         }
+
+        .completed-tasks-button {
+            position: fixed;
+            top: 3%;
+            right: 13%;
+            background-color: #a37b5b;
+            color: #fff;
+            padding: 0.5em 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-family: Arial, sans-serif;
+            font-size: 1.2em;
+            z-index: 900;
+        }
+
+        .completed-tasks-button:hover {
+            background-color: #a37b5b;
+        }
+
+        .close-button {
+            background-color: #d6bfa3;
+            color: #fff;
+            padding: 0.5em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+
+        .close-button:hover {
+            background-color: #0056b3;
+        }
+
+        .green-text {
+            color: green;
+        }
     </style>
     <style>
         .profile-popup {
@@ -86,18 +124,7 @@
             margin: 0 0 15px;
             font-size: 1.5em;
         }
-        .profile-popup button {
-            background-color: #d6bfa3;
-            color: #fff;
-            padding: 0.5em;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.2em;
-        }
-        .profile-popup button:hover {
-            background-color: #0056b3;
-        }
+
         .popup-overlay {
             position: fixed;
             top: 0;
@@ -151,7 +178,43 @@
             display: none;
             z-index: 1000;
         }
-    .happiness-area {
+
+        .completed-tasks-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 2em;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            display: none;
+            z-index: 1000;
+        }
+
+        .completed-tasks-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 999;
+        }
+
+        .completed-tasks-popup h3 {
+            margin: 0 0 15px;
+            font-size: 1.5em;
+        }
+
+        .completed-task {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+         .happiness-area {
             width: 29em;
             height: 9.5em;
             padding: 1em;
@@ -160,6 +223,7 @@
             margin-top: 0.5em;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
             align-self: flex-start;
+            margin-left: -10em;
         }
 
         .happiness-bar, .hunger-bar {
@@ -171,7 +235,6 @@
             width: 100%;
             height: 1.5em;
         }
-
     </style>
     <!-- Header and Top Margin Code -->
     <style>
@@ -191,7 +254,7 @@
             left: 1%;
             width: 5%;
             height: auto;
-            z-index: 999;
+            z-index: 900;
         }
 
         .content-wrapper {
@@ -217,6 +280,7 @@
             width: 30em;
             height: 30em;
             position: relative;
+            margin-left: -10em;
         }
 
         .todo-lists {
@@ -232,12 +296,15 @@
             padding: 2em;
             border-radius: 1em;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            width: 150%;
+            width: 180%;
             position: relative;
             margin-top: 1em;
         }
 
         .scrollable-tasks {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
             display: block;
             flex-wrap: wrap;
             height: 300px;
@@ -286,6 +353,7 @@
             gap: 1em;
             margin-top: 1em;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            margin-left: -10em;
         }
 
         .food-item {
@@ -319,11 +387,12 @@
         }
 
         .task {
+            display: flex;
             flex-grow: 1;
+            align-items: center;
             max-width: calc(100% - 2em);
             overflow-wrap: break-word;
             word-break: break-word;
-            white-space: nowrap;
             text-overflow: ellipsis;
             overflow: hidden;
             padding: 0.5em;
@@ -331,6 +400,49 @@
             border: none;
             background: none;
             cursor: text;
+        }
+
+        .styled-checkbox {
+            appearance: none;
+            width: 1.5em;
+            height: 1.5em;
+            border: 2px solid #4CAF50;
+            border-radius: 3px;
+            position: relative;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .styled-checkbox:checked {
+            background-color: #4CAF50;
+            border: none;
+        }
+
+        .styled-checkbox:checked::before {
+            content: '✓';
+            color: white;
+            font-size: 1.2em;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .task:hover {
+            background-color: #c9a98c;
+        }
+
+        .task .complete-checkbox {
+            visibility: hidden;
+            margin-right: 10px;
+        }
+
+        .task:hover .complete-checkbox {
+            visibility: visible;
+        }
+
+        .task-content {
+            flex-grow: 1;
         }
 
         .task:focus {
@@ -380,7 +492,7 @@
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
             text-align: center;
             display: none;
-            z-index: 1000;
+            z-index: 950;
         }
 
         .task-popup input[type="text"] {
@@ -391,6 +503,7 @@
             border: 0.1em solid #ccc;
             margin-bottom: 1em;
             box-sizing: border-box;
+            z-index: 950;
         }
 
         .task-popup button {
@@ -402,6 +515,7 @@
             border-radius: 2em;
             cursor: pointer;
             margin: 0.5em;
+            z-index: 950;
         }
 
         .task-popup button:hover {
@@ -416,7 +530,7 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
             display: none;
-            z-index: 500;
+            z-index: 950;
         }
 
         .delete-button {
@@ -438,12 +552,14 @@
         }
 
         .task-wrapper {
+            margin: 0;
+            padding: 0em;
+            box-sizing: border-box;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: space-between;
             border-radius: 8px;
-            margin-bottom: 1em;
         }
 
         .task-wrapper:hover .delete-btn {
@@ -477,13 +593,18 @@
 </head>
 <body>
 <!-- Header and Top Margin Code -->
-<div class="header" style="text-align: center; width: 75%; position: fixed; top: 0px; z-index: 1000;">
+<div class="header" style="text-align: center; width: 75%; position: fixed; top: 0px; z-index: 900;">
     <h1 style="font-family: 'VT323', monospace; font-size: 5em; margin: 10px 10px;">KinetiQuest</h1>
 </div>
 <div class="line"></div>
 <div class="container">
-    <img src="../static/dogandcat.png" alt="Dog and Cat">
+    <img id="logo" src="../static/dogandcat.png" alt="Dog and Cat" draggable="true" ondragstart="drag(event)">
 </div>
+
+<!-- Completed Tasks -->
+<button class="completed-tasks-button" onclick="showCompletedTasks()">Completed Tasks</button>
+<button class="profile-button" onclick="showProfile()">Profile</button>
+<button class="logout-button" onclick="showLogout()">Logout</button>
 
 <!-- Main Content Area Wrapper -->
 <div class="content-wrapper">
@@ -532,10 +653,12 @@
                 {% for quest in user_quests %}
                 {% if quest.quest_type == 'daily' %}
                 <div class="task-wrapper">
-                    <div class="task" contenteditable="true" data-task-id="{{ quest.id }}">
-                        {{ quest.description }}
+                    <div class="task {% if quest.status == 'completed' %}completed-task{% endif %}" data-task-id="{{ quest.id }}">
+                        <input type="checkbox" class="complete-checkbox styled-checkbox" onclick="markTaskComplete('{{ quest.id }}')"
+                               {% if quest.status == 'completed' %}checked disabled{% endif %}>
+                        <span class="task-text" contenteditable="true">{{ quest.description }}</span>
+                        <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
                     </div>
-                    <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
                 </div>
                 {% endif %}
                 {% endfor %}
@@ -556,8 +679,10 @@
                 {% for quest in user_quests %}
                 {% if quest.quest_type == 'weekly' %}
                 <div class="task-wrapper">
-                    <div class="task" contenteditable="true" data-task-id="{{ quest.id }}">
-                        {{ quest.description }}
+                    <div class="task" data-task-id="{{ quest.id }}">
+                        <input type="checkbox" class="complete-checkbox styled-checkbox" onclick="markTaskComplete('{{ quest.id }}')">
+                        <span class="task-text" contenteditable="true">{{ quest.description }}</span>
+                        <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
                     </div>
                     <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
                 </div>
@@ -572,7 +697,7 @@
 <div class="task-overlay" id="taskOverlay"></div>
 <div class="task-popup" id="taskPopup">
     <h3>Add New Task</h3>
-    <input type="text" id="taskInput" placeholder="Enter a new task">
+    <input type="text" id="taskInput" placeholder="Enter a new task" maxlength="29">
     <button onclick="addTask()">Add</button>
     <button onclick="closeTaskPopup()">Cancel</button>
 </div>
@@ -582,9 +707,8 @@
 <div class="profile-popup" id="profilePopup">
     <h3>Profile</h3>
     <p>Username: {{ session['username'] }}</p>
-    <button onclick="closeProfilePopup()">Close</button>
+    <button class="close-button" onclick="closeProfilePopup()">Close</button>
 </div>
-<button class="profile-button" onclick="showProfile()">Profile</button>
 
 <!-- Logout Popup -->
 <div class="logout-overlay" id="logoutOverlay"></div>
@@ -595,6 +719,21 @@
     <button onclick="closeLogoutPopup()">No</button>
 </div>
 <button class="logout-button" onclick="showLogout()">Logout</button>
+
+<!-- Completed Tasks Popup -->
+<div class="completed-tasks-overlay" id="completedTasksOverlay"></div>
+<div class="completed-tasks-popup" id="completedTasksPopup">
+    <h3>Completed Tasks</h3>
+    <div id="dailyCompletedTasks">
+        <h4>Daily Tasks</h4>
+        <div id="dailyTasksList"></div>
+    </div>
+    <div id="weeklyCompletedTasks">
+        <h4>Weekly Tasks</h4>
+        <div id="weeklyTasksList"></div>
+    </div>
+    <button class="profile-popup-button" onclick="closeCompletedTasks()">Close</button>
+</div>
 
 <!-- JavaScript Code -->
 <script>
@@ -626,6 +765,12 @@
         window.location.href = '/';
     }
 
+    function closeCompletedTasks() {
+        document.getElementById('completedTasksPopup').style.display = 'none';
+        document.getElementById('completedTasksOverlay').style.display = 'none';
+    }
+
+
     function dimContent(dim) {
         const dimClass = 'dimmed';
         const elementsToDim = document.querySelectorAll('body > *:not(#popupOverlay):not(#profilePopup):not(#logoutPopup)');
@@ -648,7 +793,13 @@
 
     function drop(ev) {
         ev.preventDefault();
-        alert('Food given to pet!');
+        const data = ev.dataTransfer.getData("text");
+
+        if (data === "logo") {
+            alert(':(');
+        } else {
+            alert('Food given to pet!');
+        }
     }
 
     function showTaskPopup(taskType) {
@@ -674,24 +825,33 @@
     });
 
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.task').forEach(taskElement => {
+        document.querySelectorAll('.task-text').forEach(taskElement => {
             taskElement.addEventListener('focus', function() {
                 this.dataset.originalValue = this.innerText;
             });
-
+            taskElement.addEventListener('blur', function() {
+                const taskId = this.closest('.task').dataset.taskId;
+                const newDescription = this.innerText;
+                updateTask(taskId, newDescription);
+            });
             taskElement.addEventListener('keydown', function(event) {
                 if (event.key === 'Escape') {
                     this.innerText = this.dataset.originalValue;
-                    this.blur(); // Remove focus from the task
+                    this.blur();
                 } else if (event.key === 'Enter') {
-                    event.preventDefault(); // Prevent newline insertion
+                    event.preventDefault();
                     this.blur();
                 }
             });
-
-            taskElement.addEventListener('blur', function() {
-                if (this.innerText !== this.dataset.originalValue) {
-                    updateTask(this.dataset.taskId, this.innerText);
+            taskElement.addEventListener('input', function() {
+                if (this.innerText.length > 29) {
+                    this.innerText = this.innerText.substring(0, 29);
+                    const range = document.createRange();
+                    const selection = window.getSelection();
+                    range.selectNodeContents(this);
+                    range.collapse(false);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
                 }
             });
         });
@@ -700,11 +860,18 @@
     function addTask() {
         const taskInputElement = document.getElementById('taskInput');
         const taskInput = taskInputElement.value;
+
+        if (taskInput.length > 29) {
+            alert("Task description cannot exceed 29 characters.");
+            return;
+        }
         const taskType = currentTaskType;
+
         if (!taskInput.trim()) {
             alert("Task description cannot be empty.");
             return;
         }
+
         fetch('/api/add_task', {
             method: 'POST',
             headers: {
@@ -716,21 +883,59 @@
         .then(data => {
             if (data.success) {
                 const taskList = document.getElementById(taskType === 'daily' ? 'dailyTasks' : 'weeklyTasks');
-                const newTaskDiv = document.createElement('div');
-                newTaskDiv.classList.add('task');
-                newTaskDiv.textContent = taskInput;
-                newTaskDiv.setAttribute('contenteditable', 'true');
-                newTaskDiv.dataset.taskId = data.task_id;
+                const newTaskWrapper = document.createElement('div');
+                newTaskWrapper.classList.add('task-wrapper');
 
+                // Create task container
+                const taskContainer = document.createElement('div');
+                taskContainer.classList.add('task');
+                taskContainer.dataset.taskId = data.task_id;
+
+                // Create checkbox element for marking task complete
+                const completeCheckbox = document.createElement('input');
+                completeCheckbox.type = 'checkbox';
+                completeCheckbox.classList.add('complete-checkbox', 'styled-checkbox');
+                completeCheckbox.onclick = () => markTaskComplete(data.task_id);
+                taskContainer.appendChild(completeCheckbox);
+
+                // Add a span for the task description
+                const taskText = document.createElement('span');
+                taskText.classList.add('task-text');
+                taskText.contentEditable = 'true';
+                taskText.textContent = taskInput;
+                taskContainer.appendChild(taskText);
+
+                // Add event listeners for editing and focusing the task description
+                taskText.addEventListener('focus', function() {
+                    this.dataset.originalValue = this.innerText;
+                });
+                taskText.addEventListener('blur', function() {
+                    const taskId = this.closest('.task').dataset.taskId;
+                    const newDescription = this.innerText;
+                    updateTask(taskId, newDescription);
+                });
+                taskText.addEventListener('keydown', function(event) {
+                    if (event.key === 'Escape') {
+                        this.innerText = this.dataset.originalValue;
+                        this.blur();
+                    } else if (event.key === 'Enter') {
+                        event.preventDefault();
+                        this.blur();
+                    }
+                });
+
+                // Delete button
                 const deleteButton = document.createElement('button');
                 deleteButton.classList.add('delete-btn');
                 deleteButton.innerHTML = '&times;';
                 deleteButton.onclick = () => deleteTask(data.task_id);
-                newTaskDiv.appendChild(deleteButton);
+                newTaskWrapper.appendChild(taskContainer);
+                newTaskWrapper.appendChild(deleteButton);
 
-                taskList.appendChild(newTaskDiv);
+                // Append new task wrapper to the task list
+                taskList.appendChild(newTaskWrapper);
 
-                // Clear the input field after adding the task
+                // Clear input field after adding the task
                 taskInputElement.value = '';
             } else {
                 alert('Failed to add task: ' + data.error);
@@ -769,6 +974,17 @@
         });
     }
 
+    function adjustScrollableHeight() {
+        const scrollableTasks = document.querySelector('.scrollable-tasks');
+        const taskCount = scrollableTasks.children.length;
+
+        if (taskCount === 0) {
+            scrollableTasks.style.height = 'auto';
+        } else {
+            scrollableTasks.style.height = '';
+        }
+    }
+
     function deleteTask(taskId) {
         fetch('/api/delete_task', {
             method: 'POST',
@@ -782,7 +998,8 @@
             if (data.success) {
                 const taskElement = document.querySelector(`.task[data-task-id='${taskId}']`);
                 if (taskElement) {
-                    taskElement.remove();
+                    taskElement.closest('.task-wrapper').remove();
+                    adjustScrollableHeight();
                 }
             } else {
                 alert('Failed to delete task: ' + data.error);
@@ -793,6 +1010,101 @@
             alert('An error occurred while deleting the task.');
         });
     }
+
+    function markTaskComplete(taskId) {
+        if (!taskId) {
+            alert('Invalid task ID.');
+            return;
+        }
+
+        fetch('/api/complete_task', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `task_id=${encodeURIComponent(taskId)}`
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || 'Unknown error occurred');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                console.log('Task marked as completed.');
+
+                const taskElement = document.querySelector(`.task[data-task-id='${taskId}']`);
+                if (taskElement) {
+                    taskElement.classList.add('completed-task');
+                }
+            } else if (data.error) {
+                alert('Failed to complete task: ' + data.error);
+            } else {
+                alert('Unexpected response format.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while marking the task as completed: ' + error.message);
+        });
+    }
+
+    function showCompletedTasks() {
+        fetch('/api/completed_tasks')
+            .then(response => response.json())
+            .then(data => {
+                if (data.tasks) {
+                    // Clear previous tasks
+                    const dailyTasksListElement = document.getElementById('dailyTasksList');
+                    const weeklyTasksListElement = document.getElementById('weeklyTasksList');
+                    dailyTasksListElement.innerHTML = '';
+                    weeklyTasksListElement.innerHTML = '';
+
+                    // Populate lists with completed tasks
+                    data.tasks.forEach(task => {
+                        const taskElement = document.createElement('div');
+                        taskElement.classList.add('completed-task-item');
+
+                        const taskDescription = document.createElement('span');
+                        taskDescription.textContent = task.description;
+
+                        const completedDate = new Date(task.completed_at).toLocaleDateString();
+                        const completedDateSpan = document.createElement('span');
+                        completedDateSpan.classList.add('green-text');
+                        if (task.is_deleted) {
+                            completedDateSpan.textContent = ` (Deleted)`;
+                            completedDateSpan.style.color = 'grey';
+                        } else {
+                            completedDateSpan.textContent = ` (Completed at: ${completedDate})`;
+                        }
+
+                        taskElement.appendChild(taskDescription);
+                        taskElement.appendChild(completedDateSpan);
+
+                        // Add the task to either daily or weekly tasks list
+                        if (task.quest_type === 'daily') {
+                            dailyTasksListElement.appendChild(taskElement);
+                        } else if (task.quest_type === 'weekly') {
+                            weeklyTasksListElement.appendChild(taskElement);
+                        }
+                    });
+
+                    // Show the popup
+                    document.getElementById('completedTasksPopup').style.display = 'block';
+                    document.getElementById('completedTasksOverlay').style.display = 'block';
+                } else {
+                    alert('No tasks found.');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching tasks:', error);
+                alert('An error occurred while fetching tasks.');
+            });
+    }
+
 </script>
 
 </body>

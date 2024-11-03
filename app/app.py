@@ -243,12 +243,23 @@ def add_task():
     task_description = request.form.get('task_description')
     task_type = request.form.get('task_type')
     user_id = session.get('user_id')
+    due_date = request.form.get('due_date')  # 'YYYY-MM-DD'
+    due_time = request.form.get('due_time')  # 'HH:MM'
+    repeat_days = request.form.getlist('repeat_days')  # ['Monday', 'Wednesday']
+    end_of_day = bool(request.form.get('end_of_day'))  # bool
 
     if not task_description or not task_type or not user_id:
         return {"error": "Missing field in POST!"}, 400
 
+    # convert format of data and time
+    if due_date:
+        due_date = datetime.strptime(due_date, '%Y-%m-%d').replace(tzinfo=pytz.utc)
+    if due_time:
+        due_time = datetime.strptime(due_time, '%H:%M').time()
+
     # Create a new quest
-    new_quest = Quest(description=task_description, user_id=user_id, quest_type=task_type)
+    new_quest = Quest(description=task_description, user_id=user_id, quest_type=task_type, 
+                      due_date=due_date, repeat_days=repeat_days, due_time=due_time, end_of_day=end_of_day)
     new_quest.save()
 
     return {"success": "Task added successfully!", "task_id": new_quest.id}, 200

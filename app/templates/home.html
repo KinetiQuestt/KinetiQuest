@@ -657,6 +657,8 @@
                         <input type="checkbox" class="complete-checkbox styled-checkbox" onclick="markTaskComplete('{{ quest.id }}')"
                                {% if quest.status == 'completed' %}checked disabled{% endif %}>
                         <span class="task-text" contenteditable="true">{{ quest.description }}</span>
+                        <span class="task-due-date">{{ quest.due_date }}</span>
+                        <span class="task-due-time">{{ quest.due_time }}</span>
                         <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
                     </div>
                 </div>
@@ -682,6 +684,9 @@
                     <div class="task" data-task-id="{{ quest.id }}">
                         <input type="checkbox" class="complete-checkbox styled-checkbox" onclick="markTaskComplete('{{ quest.id }}')">
                         <span class="task-text" contenteditable="true">{{ quest.description }}</span>
+                        <span class="task-due-date">{{ quest.due_date }}</span>
+                        <span class="task-due-time">{{ quest.due_time }}</span>
+                        <span class="task-repeat-days">{{ quest.repeat_days }}</span>
                         <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
                     </div>
                     <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
@@ -698,6 +703,17 @@
 <div class="task-popup" id="taskPopup">
     <h3>Add New Task</h3>
     <input type="text" id="taskInput" placeholder="Enter a new task" maxlength="29">
+    <input type="date" id="dueDateInput" placeholder="Due Date">
+    <input type="time" id="dueTimeInput" placeholder="Due Time">
+    <select id="repeatDaysInput" multiple>
+        <option value="Monday">Monday</option>
+        <option value="Tuesday">Tuesday</option>
+        <option value="Wednesday">Wednesday</option>
+        <option value="Thursday">Thursday</option>
+        <option value="Friday">Friday</option>
+        <option value="Saturday">Saturday</option>
+        <option value="Sunday">Sunday</option>
+    </select>
     <button onclick="addTask()">Add</button>
     <button onclick="closeTaskPopup()">Cancel</button>
 </div>
@@ -806,6 +822,9 @@
         currentTaskType = taskType;
         document.getElementById('taskPopup').style.display = 'block';
         document.getElementById('taskOverlay').style.display = 'block';
+
+        const repeatDaysInput = document.getElementById('repeatDaysInput');
+        repeatDaysInput.style.display = taskType === 'daily' ? 'none' : 'block';
     }
 
     function closeTaskPopup() {
@@ -860,6 +879,10 @@
     function addTask() {
         const taskInputElement = document.getElementById('taskInput');
         const taskInput = taskInputElement.value;
+        const dueDate = document.getElementById('dueDateInput').value;
+        const dueTime = document.getElementById('dueTimeInput').value;
+        const repeatDays = Array.from(document.getElementById('repeatDaysInput').selectedOptions)
+                            .map(option => option.value);
 
         if (taskInput.length > 29) {
             alert("Task description cannot exceed 29 characters.");
@@ -877,7 +900,7 @@
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: `task_description=${encodeURIComponent(taskInput)}&task_type=${encodeURIComponent(taskType)}`
+            body: `task_description=${encodeURIComponent(taskInput)}&task_type=${encodeURIComponent(taskType)}&due_date=${encodeURIComponent(dueDate)}&due_time=${encodeURIComponent(dueTime)}&repeat_days=${encodeURIComponent(repeatDays)}`
         })
         .then(response => response.json())
         .then(data => {
@@ -958,7 +981,7 @@
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: `task_id=${encodeURIComponent(taskId)}&new_description=${encodeURIComponent(newDescription)}`
+            body: `task_id=${encodeURIComponent(taskId)}&new_description=${encodeURIComponent(newDescription)}&new_due_date=${encodeURIComponent(newDueDate)}&new_repeat_days=${encodeURIComponent(newRepeatDays)}`
         })
         .then(response => response.json())
         .then(data => {

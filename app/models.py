@@ -3,6 +3,7 @@ from sqlalchemy import func
 from datetime import datetime
 from datetime import timedelta
 import pytz
+from sqlalchemy.dialects.sqlite import JSON
 
 db = SQLAlchemy()
 
@@ -64,22 +65,52 @@ class Quest(db.Model):
     start_time = db.Column(db.DateTime, default=lambda: datetime.now(tz=pytz.utc))
     end_time = db.Column(db.DateTime)
 
+    due_date = db.Column(db.DateTime) # date due
+    repeat_days = db.Column(JSON, default=[]) # format is like ['Monday', 'Tuesday'] I think but in a JSON column
+    due_time = db.Column(db.Time)  # time due
+    end_of_day = db.Column(db.Boolean, default=False) # for if we just want to default to end of day
+
     def __repr__(self) -> str:
         return f"<Quest(id={self.id}, description={self.description}, assigned_to={self.assigned_to}, status={self.status})>"
 
-    def __init__(self, description, user_id, quest_type='daily', duration_hours=2, weight=5):
+    def __init__(self, description, user_id, quest_type='daily', duration_hours=2, weight=5, due_date=None, repeat_days=None, due_time=None, end_of_day=True):
         self.description = description
         self.assigned_to = user_id
         self.quest_type = quest_type
         self.reward=weight
         self.start_time = datetime.now()
         self.end_time = self.start_time + timedelta(hours=duration_hours)
+        self.due_date = due_date or self.start_time
+        self.repeat_days = repeat_days or []
+        self.due_time = due_time
+        self.end_of_day = end_of_day
 
     def finish_quest(self):
         if self.status != 'completed':
             self.status = 'completed'
             self.end_time = datetime.now(tz=pytz.utc)
             db.session.commit()
+        
+    # untested
+    def reset_due_date(self):
+        now = datetime.now(tz=pytz.utc)
+        # when past due, we just reset due data to +1 day for daily
+        if self.quest_type == 'daily' and now > self.due_date:
+            self.due_date = now + timedelta(days=1)
+        elif self.quest_type == 'weekly' and self.repeat_days:
+            # Set next due date based on current weekday
+            # we default to next day being first day
+            next_due_day=self.repeat_days[0]
+            # but if can iterate through the repeaded day and get a later time, we do that
+            for day in self.repeat_days:
+                if day > now.weekday():
+                        next_due_day=day
+
+            days_until_next_due = (next_due_day - now.weekday()) % 7
+            self.due_date = now + timedelta(days=days_until_next_due)
+
+        db.session.commit()
+
 
     def save(self):
         db.session.add(self)

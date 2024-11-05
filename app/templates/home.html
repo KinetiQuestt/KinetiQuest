@@ -837,24 +837,30 @@
 
         if (data === "logo") {
             alert(':(');
+            return;
         } else {
             if (data == "foodIMG") {
                 if (foodQuantity == 0) {
                     alert('No food available!');
                     return;
                 }
+                alert('Food given to pet!');
                 foodQuantity--;
+                updateFoodQuantity();
+                return;
             }
             else if (data == "specialfoodIMG") {
                 if (specialfoodQuantity == 0) {
                     alert('No food available!');
                     return;
                 }
+                alert('Special food given to pet!');
                 specialfoodQuantity--;
+                updateFoodQuantity();
+                return;
             }
             
-            alert('Food given to pet!');
-            updateFoodQuantity();
+            alert('That is not food!');
         }
     }
 

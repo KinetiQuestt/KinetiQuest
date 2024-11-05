@@ -349,11 +349,18 @@
             border-radius: 10px;
             display: flex;
             justify-content: space-evenly;
-            align-items: center;
+            align-items: flex-start;
             gap: 1em;
             margin-top: 1em;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
             margin-left: -10em;
+        }
+
+        .food-item-container {
+            display: flex;
+            width: 35em;
+            flex-direction: column;
+            align-items: center;
         }
 
         .food-item {
@@ -361,8 +368,18 @@
             max-width: 4em;
             height: 4em;
             background-image: url('../static/food.png');
-            background-size: cover;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
             cursor: grab;
+            margin-bottom: -0.5em;
+        }
+
+        .food-label {
+            margin-top: 0.5em;
+            font-size: 0.9em;
+            color: #333;
+            text-align: center;
         }
 
         .food-drop-zone {
@@ -632,8 +649,14 @@
 
         <!-- Food Area -->
         <div class="food-area">
-            <div class="food-item" draggable="true" ondragstart="drag(event)" style="background-image: url('../static/food.png');"></div>
-            <div class="food-item" draggable="true" ondragstart="drag(event)" style="background-image: url('../static/specialfood.png');"></div>
+            <div class="food-item-container">
+                <div id="foodIMG" class="food-item" draggable="true" ondragstart="drag(event)" style="background-image: url('../static/food.png');"></div>
+                <span class="food-label">Food Quantity: <span id="foodQuantity"></span></span>
+            </div>
+            <div class="food-item-container">
+                <div id="specialfoodIMG" class="food-item" draggable="true" ondragstart="drag(event)" style="background-image: url('../static/specialfood.png');"></div>
+                <span class="food-label">Special Food Quantity: <span id="specialfoodQuantity"></span></span>
+            </div>
         </div>
     </div>
 
@@ -654,7 +677,7 @@
                 {% if quest.quest_type == 'daily' %}
                 <div class="task-wrapper">
                     <div class="task {% if quest.status == 'completed' %}completed-task{% endif %}" data-task-id="{{ quest.id }}">
-                        <input type="checkbox" class="complete-checkbox styled-checkbox" onclick="markTaskComplete('{{ quest.id }}')"
+                        <input type="checkbox" class="complete-checkbox styled-checkbox" onclick="markTaskComplete('{{ quest.id }}', 'daily')"
                                {% if quest.status == 'completed' %}checked disabled{% endif %}>
                         <span class="task-text" contenteditable="true">{{ quest.description }}</span>
                         <span class="task-due-date">{{ quest.due_date }}</span>
@@ -682,7 +705,7 @@
                 {% if quest.quest_type == 'weekly' %}
                 <div class="task-wrapper">
                     <div class="task" data-task-id="{{ quest.id }}">
-                        <input type="checkbox" class="complete-checkbox styled-checkbox" onclick="markTaskComplete('{{ quest.id }}')">
+                        <input type="checkbox" class="complete-checkbox styled-checkbox" onclick="markTaskComplete('{{ quest.id }}', 'weekly')">
                         <span class="task-text" contenteditable="true">{{ quest.description }}</span>
                         <span class="task-due-date">{{ quest.due_date }}</span>
                         <span class="task-due-time">{{ quest.due_time }}</span>
@@ -754,6 +777,8 @@
 <!-- JavaScript Code -->
 <script>
     let currentTaskType = '';
+    let foodQuantity = 1;
+    let specialfoodQuantity = 1;
 
     function showProfile() {
         document.getElementById('profilePopup').style.display = 'block';
@@ -786,7 +811,6 @@
         document.getElementById('completedTasksOverlay').style.display = 'none';
     }
 
-
     function dimContent(dim) {
         const dimClass = 'dimmed';
         const elementsToDim = document.querySelectorAll('body > *:not(#popupOverlay):not(#profilePopup):not(#logoutPopup)');
@@ -813,8 +837,30 @@
 
         if (data === "logo") {
             alert(':(');
+            return;
         } else {
-            alert('Food given to pet!');
+            if (data == "foodIMG") {
+                if (foodQuantity == 0) {
+                    alert('No food available!');
+                    return;
+                }
+                alert('Food given to pet!');
+                foodQuantity--;
+                updateFoodQuantity();
+                return;
+            }
+            else if (data == "specialfoodIMG") {
+                if (specialfoodQuantity == 0) {
+                    alert('No food available!');
+                    return;
+                }
+                alert('Special food given to pet!');
+                specialfoodQuantity--;
+                updateFoodQuantity();
+                return;
+            }
+            
+            alert('That is not food!');
         }
     }
 
@@ -918,7 +964,7 @@
                 const completeCheckbox = document.createElement('input');
                 completeCheckbox.type = 'checkbox';
                 completeCheckbox.classList.add('complete-checkbox', 'styled-checkbox');
-                completeCheckbox.onclick = () => markTaskComplete(data.task_id);
+                completeCheckbox.onclick = () => markTaskComplete(data.task_id, taskType);
                 taskContainer.appendChild(completeCheckbox);
 
                 // Add a span for the task description
@@ -1034,7 +1080,7 @@
         });
     }
 
-    function markTaskComplete(taskId) {
+    function markTaskComplete(taskId, taskType) {
         if (!taskId) {
             alert('Invalid task ID.');
             return;
@@ -1058,6 +1104,16 @@
         .then(data => {
             if (data.success) {
                 console.log('Task marked as completed.');
+
+                if (taskType === 'daily') {
+                    alert('Congratulations for completing a daily task! You earned food!');
+                    foodQuantity++;
+                }
+                else if (taskType === 'weekly') {
+                    alert('Congratulations for completing a weekly task! You earned special food!');
+                    specialfoodQuantity++;
+                }
+                updateFoodQuantity();
 
                 const taskElement = document.querySelector(`.task[data-task-id='${taskId}']`);
                 if (taskElement) {
@@ -1127,6 +1183,13 @@
                 alert('An error occurred while fetching tasks.');
             });
     }
+
+    function updateFoodQuantity() {
+        document.getElementById('foodQuantity').textContent = foodQuantity;
+        document.getElementById('specialfoodQuantity').textContent = specialfoodQuantity;
+    }
+
+    window.onload = updateFoodQuantity;
 
 </script>
 

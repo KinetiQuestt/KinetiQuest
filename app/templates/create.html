@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KinetiQuest - Login</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(45deg, #ff9a9e, #fad0c4, #ff9a9e);
+            background-size: 300% 300%;
+            animation: gradientAnimation 10s ease infinite;
+        }
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            transform: translateY(130px);
+        }
+        .container form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .container input {
+            padding: 10px;
+            font-size: 1em;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .container button {
+            background-color: #007BFF;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .container button:hover {
+            background-color: #0056b3;
+        }
+        #dog {
+            width: 3in;
+            height: 3in;
+            position: absolute;
+            top: 30%;
+            transform: translateY(-50%);
+            left: 30%;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        #cat {
+            width: 3in;
+            height: 3in;
+            position: absolute;
+            top: 30%;
+            transform: translateY(-50%);
+            right: 30%;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        .dog-overlay {
+            width: 3in;
+            height: 3in;
+            position: absolute;
+            top: 30%;
+            transform: translateY(-50%);
+            left: 30%;
+            background: rgba(0, 0, 0, 0.5);
+            display: block;
+            border-radius: 10px;
+            z-index: 1000;
+        }
+        .cat-overlay {
+            width: 3in;
+            height: 3in;
+            position: absolute;
+            top: 30%;
+            transform: translateY(-50%);
+            right: 30%;
+            background: rgba(0, 0, 0, 0.5);
+            display: block;
+            border-radius: 10px;
+            z-index: 1000;
+        }
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header" style="text-align: center; width: 75%; position: fixed; top: 0px; z-index: 900;">
+        <h1 style="font-family: 'VT323', monospace; font-size: 5em; margin: 10px 10px;">Create Your Pet!</h1>
+    </div>
+
+    <div class="dog-overlay" id="dogOverlay" onclick="showDog()"></div>
+    <div class="cat-overlay" id="catOverlay" onclick="showCat()"></div>
+    <img id="dog" src="../static/tempdog.png" alt="Dog" draggable="false" onclick="showDog()">
+    <img id="cat" src="../static/tempcat.png" alt="Cat" draggable="false" onclick="showCat()">
+
+<div class="container">
+    <h2>Name your Pet!</h2>
+    <form action="/create" method="POST">
+        <input type="text" name="petName" placeholder="Your Pet's name" required>
+
+        <!-- Flash messages block for errors and success -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == 'error' %}
+                    <div class="error-message">{{ message }}</div>
+                    {% elif category == 'success' %}
+                    <div class="success-message">{{ message }}</div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <button type="submit">Create!</button>
+    </form>
+</div>
+
+<script>
+    function showDog() {
+        document.getElementById('dogOverlay').style.display = 'none';
+        document.getElementById('catOverlay').style.display = 'block';
+    }
+
+    function showCat() {
+        document.getElementById('dogOverlay').style.display = 'block';
+        document.getElementById('catOverlay').style.display = 'none';
+    }
+</script>
+</body>
+</html>

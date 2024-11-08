@@ -19,15 +19,36 @@ db.init_app(app)
 ########## Main User Pages ###########
 ######################################
 
+# global bool to check for first login
+firstLogin = False
+
 @app.route('/')
 def welcome():
     # This route renders the main homepage, which is index.html
     return render_template('index.html')
 
+@app.route('/create', methods=['GET', 'POST'])
+def create():
+    global firstLogin
 
+    # routing users to create page, called for first time login
+    if request.method == 'GET':
+        return render_template('create.html')
+    
+    # Read the form data
+    petName = request.form.get('petName')
+
+    # send petName data to server here -placeholder
+    print(petName)
+
+    #redirect to home
+    firstLogin = False
+    return redirect(url_for('home'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    global firstLogin
+
     if request.method == 'GET':
         return render_template('register.html')
 
@@ -66,6 +87,8 @@ def register():
     # Create pet, most things just default for now, can apadt as needed
     new_pet = Pet(user_id=new_user.id, pet_type="dog")
     new_pet.save()
+
+    firstLogin = True
 
     # Flash a success message and redirect to login page
     flash('Registration successful! Please login.', 'success')
@@ -129,10 +152,11 @@ def login():
         session['pet_happiness'] = user.pet.happiness
         session['pet_hunger'] = user.pet.hunger
 
-    # Redirect to home page after successful login
+    # Redirect to home page after successful login, or pet creation page if first time
+    if (firstLogin):
+        return redirect(url_for('create'))
+    
     return redirect(url_for('home'))
-
-
 
 @app.route('/home', methods=['GET'])
 def home():

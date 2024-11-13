@@ -115,20 +115,6 @@
     <h2>Name your Pet!</h2>
     <form action="/create" method="POST">
         <input type="text" name="petName" placeholder="Your Pet's name" required>
-
-        <!-- Flash messages block for errors and success -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    {% if category == 'error' %}
-                    <div class="error-message">{{ message }}</div>
-                    {% elif category == 'success' %}
-                    <div class="success-message">{{ message }}</div>
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
         <button type="submit">Create!</button>
     </form>
 </div>

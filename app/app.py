@@ -31,17 +31,30 @@ def welcome():
 def create():
     global firstLogin
 
-    # routing users to create page, called for first time login
     if request.method == 'GET':
         return render_template('create.html')
     
     # Read the form data
     petName = request.form.get('petName')
+    petType = request.form.get('petSelection')
 
-    # send petName data to server here -placeholder
-    print(petName)
+    # Fetch user_id from session
+    user_id = session.get('user_id')
 
-    #redirect to home
+    if not user_id:
+        flash("User session not found, please login again.", 'error')
+        return redirect(url_for('login'))
+
+    # Save pet information to the database
+    new_pet = Pet(user_id=user_id, pet_type=petType, name=petName)
+    db.session.add(new_pet)
+    db.session.commit()
+
+    # Save pet info in session for immediate use
+    session['pet_name'] = petName
+    session['pet_type'] = petType
+
+    # Redirect to home
     firstLogin = False
     return redirect(url_for('home'))
 
@@ -162,14 +175,33 @@ def login():
 def home():
     username = session.get('username', 'Guest')
     user_id = session.get('user_id')
-    pet = Pet.query.filter_by(user_id=user_id).first()
+
+    # Initialize the pet variable to None
+    pet = None
+
+    # Fetch the user's pet either from session or from the database
+    pet_name = session.get('pet_name')
+    pet_type = session.get('pet_type')
+
+    # If the pet is not found in the session then try fetching from the database
+    if not pet_name or not pet_type:
+        pet = Pet.query.filter_by(user_id=user_id).first()
+        if pet:
+            pet_name = pet.name
+            pet_type = pet.pet_type
+            # Update the session with the pet information
+            session['pet_name'] = pet_name
+            session['pet_type'] = pet_type
+
     user_quests = Quest.query.filter_by(assigned_to=user_id).all()
 
+    # Render the template with the correct pet values
     return render_template('home.html',
                            username=username,
-                           pet_type=pet.pet_type,
-                           pet_happiness=pet.happiness,
-                           pet_hunger=pet.hunger,
+                           pet_type=pet_type,
+                           pet_name=pet_name,
+                           pet_happiness=pet.happiness if pet else None,
+                           pet_hunger=pet.hunger if pet else None,
                            user_quests=user_quests)
 
 
@@ -191,6 +223,68 @@ def user_quests():
     # quests = [assignment.quest.description for assignment in assignments]
 
     return f"quests for {username}: " #+ ', '.join(quests)
+
+@app.route('/api/feed_pet', methods=['POST'])
+def feed_pet():
+    amount = request.form.get('amount', 1, type=int)  # Default to 1
+
+    # Fetch the userss pet
+    user_id = session.get('user_id')
+    if not user_id:
+        return {"error": "User session not found!"}, 400
+
+    pet = Pet.query.filter_by(user_id=user_id).first()
+    if not pet:
+        return {"error": "Pet not found!"}, 404
+
+    # Update the food quantity
+    pet.food_quantity = max(0, pet.food_quantity - amount)  # Decrease food quantity
+    pet.hunger = max(0, pet.hunger - amount)  # Decrease hunger by the amount fed)
+
+    pet.update()  # Save changes to the database
+    return {
+        "success": True,
+        "food_quantity": pet.food_quantity,  # Return updated food quantity
+        "hunger": pet.hunger
+    }, 200
+
+@app.route('/api/get_food_quantities', methods=['GET'])
+def get_food_quantities():
+    user_id = session.get('user_id')
+    if not user_id:
+        return {"error": "Unauthorized"}, 401
+
+    pet = Pet.query.filter_by(user_id=user_id).first()
+    if not pet:
+        return {"error": "Pet not found!"}, 404
+
+    return {
+        "food_quantity": pet.food_quantity,
+        "special_food_quantity": pet.special_food_quantity
+    }, 200
+
+@app.route('/api/update_food_quantities', methods=['POST'])
+def update_food_quantities():
+    user_id = session.get('user_id')
+    if not user_id:
+        return {"error": "Unauthorized"}, 401
+
+    pet = Pet.query.filter_by(user_id=user_id).first()
+    if not pet:
+        return {"error": "Pet not found!"}, 404
+
+    food_quantity = request.form.get('food_quantity')
+    special_food_quantity = request.form.get('special_food_quantity')
+
+    if food_quantity is not None:
+        pet.food_quantity = int(food_quantity)
+
+    if special_food_quantity is not None:
+        pet.special_food_quantity = int(special_food_quantity)
+
+    db.session.commit()
+
+    return {"success": "Food quantities updated successfully!"}, 200
 
 
 ######################################
@@ -340,7 +434,7 @@ def delete_task():
 
     # Mark the task as deleted instead of actually deleting it
     try:
-        task.is_deleted = True
+        db.session.delete(task)
         db.session.commit()
     except Exception as e:
         db.session.rollback()
@@ -377,19 +471,35 @@ def complete_task():
         app.logger.error(f"Task with ID {task_id} not found.")
         return {"error": "Task not found!"}, 404
 
-    # Mark the task as completed
+    # Fetch user pet
+    user_id = session.get('user_id')
+    pet = Pet.query.filter_by(user_id=user_id).first()
+
+    if not pet:
+        app.logger.error(f"Pet for user ID {user_id} not found.")
+        return {"error": "Pet not found!"}, 404
+
+    # Mark the task as completed and update food quantity
     try:
-        task.status = 'completed'
-        task.end_time = datetime.now(tz=pytz.utc)
-        app.logger.info(f"Task with ID {task_id} status set to completed. Attempting to commit...")
-        db.session.commit()
-        app.logger.info(f"Task with ID {task_id} successfully committed as completed.")
+        if task.status != 'completed':
+            task.status = 'completed'
+            task.end_time = datetime.now(tz=pytz.utc)
+
+            # Update pet food quantities based on task type
+            if task.quest_type == 'daily':
+                pet.food_quantity += 1
+            elif task.quest_type == 'weekly':
+                pet.special_food_quantity += 1
+
+            app.logger.info(f"Task with ID {task_id} status set to completed. Attempting to commit...")
+            db.session.commit()
+            app.logger.info(f"Task with ID {task_id} successfully committed as completed.")
     except Exception as e:
         app.logger.error(f"Error occurred while marking task as completed: {e}", exc_info=True)
         db.session.rollback()  # Rollback in case of an error
         return {"error": f"Failed to complete task. Error: {str(e)}"}, 500
 
-    return {"success": "Task marked as completed!"}, 200
+    return {"success": "Task marked as completed!", "task_type": task.quest_type}, 200
 
 @app.route('/api/completed_tasks', methods=['GET'])
 def completed_tasks():

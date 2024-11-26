@@ -127,6 +127,7 @@ class Pet(db.Model):
     happiness = db.Column(db.Integer, nullable=False, default=100)
     hunger = db.Column(db.Integer, nullable=False, default=100)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', back_populates='pet')
     food_quantity = db.Column(db.Integer, nullable=False, default=1)
     special_food_quantity = db.Column(db.Integer, nullable=False, default=1)
 

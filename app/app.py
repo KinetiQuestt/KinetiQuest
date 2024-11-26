@@ -97,10 +97,6 @@ def register():
     new_user = User(username=username, password_hash=password_hash, email=email)
     new_user.save()
 
-    # Create pet, most things just default for now, can apadt as needed
-    new_pet = Pet(user_id=new_user.id, pet_type="dog")
-    new_pet.save()
-
     firstLogin = True
 
     # Flash a success message and redirect to login page
@@ -183,15 +179,13 @@ def home():
     pet_name = session.get('pet_name')
     pet_type = session.get('pet_type')
 
-    # If the pet is not found in the session then try fetching from the database
-    if not pet_name or not pet_type:
-        pet = Pet.query.filter_by(user_id=user_id).first()
-        if pet:
-            pet_name = pet.name
-            pet_type = pet.pet_type
-            # Update the session with the pet information
-            session['pet_name'] = pet_name
-            session['pet_type'] = pet_type
+    pet = Pet.query.filter_by(user_id=user_id).first()
+    if pet:
+        pet_name = pet.name
+        pet_type = pet.pet_type
+        # Update the session with the pet information
+        session['pet_name'] = pet_name
+        session['pet_type'] = pet_type
 
     user_quests = Quest.query.filter_by(assigned_to=user_id).all()
 
@@ -226,7 +220,7 @@ def user_quests():
 
 @app.route('/api/feed_pet', methods=['POST'])
 def feed_pet():
-    amount = request.form.get('amount', 1, type=int)  # Default to 1
+    food_type = request.form.get('type', 'food')  # 'food' or 'special'
 
     # Fetch the userss pet
     user_id = session.get('user_id')
@@ -238,13 +232,18 @@ def feed_pet():
         return {"error": "Pet not found!"}, 404
 
     # Update the food quantity
-    pet.food_quantity = max(0, pet.food_quantity - amount)  # Decrease food quantity
-    pet.hunger = max(0, pet.hunger - amount)  # Decrease hunger by the amount fed)
+    if food_type == 'food' and pet.food_quantity > 0:
+        pet.food_quantity -= 1
+        pet.hunger = max(0, pet.hunger - 10)
+    elif food_type == 'special' and pet.special_food_quantity > 0:
+        pet.special_food_quantity -= 1
+        pet.hunger = max(0, pet.hunger - 20)
 
     pet.update()  # Save changes to the database
     return {
         "success": True,
-        "food_quantity": pet.food_quantity,  # Return updated food quantity
+        "food_quantity": pet.food_quantity,
+        "special_food_quantity": pet.special_food_quantity,
         "hunger": pet.hunger
     }, 200
 

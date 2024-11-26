@@ -1111,8 +1111,6 @@
                     alert('Congratulations for completing a weekly task! You earned special food!');
                     specialfoodQuantity++;
                 }
-                updateFoodQuantity();
-
                 updateFoodQuantity(); // Update the display after completing the task
                 saveFoodQuantities(); // Persist the new quantity to the backend
             } else {
@@ -1139,7 +1137,8 @@
 
         if (data === "logo") {
             alert(':(');
-        } else {
+        }
+        if (data === "foodIMG" || data === "specialfoodIMG") {
             alert('Food given to pet!');
             feedPet(data === 'foodIMG' ? 'food' : 'special');
         }
@@ -1207,7 +1206,7 @@
 
         function movePetRandomly() {
             const maxX = petArea.clientWidth - petElement.clientWidth;
-            const maxY = petArea.clientHeight - petElement.clientHeight;
+            const maxY = petArea.clientHeight - petElement.clientHeight - 20;
 
             targetPosition.x = Math.floor(Math.random() * maxX);
             targetPosition.y = Math.floor(Math.random() * maxY);
@@ -1216,30 +1215,9 @@
         requestAnimationFrame(updatePetPosition);
         setInterval(movePetRandomly, 5000);
 
-        function feedPet() {
-            fetch('/api/feed_pet', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: `amount=1`  // Amount of food to feed
-            }).then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Update food quantity and hunger in frontend
-                    foodQuantity = data.food_quantity;  // Update food quantity
-                    updateFoodQuantity();
-                    document.getElementById('petHunger').innerText = `Hunger: ${data.hunger}`;
-                    alert('Pet fed successfully!');
-                } else {
-                    alert('Failed to feed the pet!');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while feeding the pet.');
-            });
-        }
+        petElement.addEventListener('click', () => {
+            petElement.src = petAnimations.pet;
+        });
 
         function updateFoodQuantity() {
             document.getElementById('foodQuantityDisplay').innerText = `Food Quantity: ${foodQuantity}`;
@@ -1248,6 +1226,30 @@
         document.addEventListener('dragover', allowDrop);
         document.addEventListener('drop', drop);
     });
+
+    function feedPet(foodType) {
+            fetch('/api/feed_pet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `type=${foodType}`
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    foodQuantity = data.food_quantity;  
+                    specialfoodQuantity = data.special_food_quantity;
+                    updateFoodQuantity();
+                    document.getElementById('hunger').value = data.hunger;
+
+                    // need to fix as this does not work since this function is outside above event listener
+                    petElement.src = petAnimations.treat;
+                    setTimeout(() => {
+                        petElement.src = petAnimations.idle;
+                    }, 2000);
+                } else {
+                    alert(data.message);
+                }
+            }).catch(console.error);
+        }
 
     function updateFoodQuantity() {
         document.getElementById('foodQuantity').textContent = foodQuantity;

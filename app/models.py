@@ -25,7 +25,7 @@ class User(db.Model):
     quests = db.relationship('Quest', backref='assigned_user', lazy='joined')
 
     #Pet, just one for now
-    pet = db.relationship('Pet', backref='owner', uselist=False)
+    pet = db.relationship('Pet', back_populates='user', uselist=False)
 
 
     # Representation of User (can be more flushed out)
@@ -78,7 +78,7 @@ class Quest(db.Model):
         self.assigned_to = user_id
         self.quest_type = quest_type
         self.reward=weight
-        self.start_time = datetime.now()
+        self.start_time = datetime.now(tz=pytz.utc)
         self.end_time = self.start_time + timedelta(hours=duration_hours)
         self.due_date = due_date or self.start_time
         self.repeat_days = repeat_days or []
@@ -127,6 +127,9 @@ class Pet(db.Model):
     happiness = db.Column(db.Integer, nullable=False, default=100)
     hunger = db.Column(db.Integer, nullable=False, default=100)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', back_populates='pet', overlaps="owner")
+    food_quantity = db.Column(db.Integer, nullable=False, default=1)
+    special_food_quantity = db.Column(db.Integer, nullable=False, default=1)
 
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(tz=pytz.utc))
     updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(tz=pytz.utc), onupdate=lambda: datetime.now(tz=pytz.utc))
@@ -136,15 +139,22 @@ class Pet(db.Model):
     def __repr__(self):
         return f"<Pet(id={self.id}, name={self.name}, pet_type={self.pet_type}, health={self.happiness}, hunger={self.hunger})>"
 
-    def __init__(self, user_id, pet_type, name="Spot", hunger=100, happiness=100):
+    def __init__(self, user_id, pet_type, name="Spot", hunger=100, happiness=100, food_quantity=1, special_food_quantity=1):
         self.user_id = user_id
         self.pet_type = pet_type
         self.name = name
         self.hunger = hunger
         self.happiness = happiness
+        self.food_quantity = food_quantity
+        self.special_food_quantity = special_food_quantity
 
     def feed(self, amount):
+        # Decrease hunger (max 0)
         self.hunger = max(0, self.hunger - amount)
+
+        # Decrease food quantity (max 0)
+        self.food_quantity = max(0, self.food_quantity - 1)
+
         self.update()
 
     def play(self, amount):

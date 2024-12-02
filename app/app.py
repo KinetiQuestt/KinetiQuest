@@ -3,8 +3,9 @@ from hashlib import sha256
 from models import db, User, Quest, Pet
 from sqlalchemy import update
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
+from loadquests import load_presets
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -31,18 +32,63 @@ def welcome():
 def create():
     global firstLogin
 
-    # routing users to create page, called for first time login
     if request.method == 'GET':
         return render_template('create.html')
     
     # Read the form data
     petName = request.form.get('petName')
+    petType = request.form.get('petSelection')
 
-    # send petName data to server here -placeholder
-    print(petName)
+    # Fetch user_id from session
+    user_id = session.get('user_id')
 
-    #redirect to home
+    if not user_id:
+        flash("User session not found, please login again.", 'error')
+        return redirect(url_for('login'))
+
+    # Save pet information to the database
+    new_pet = Pet(user_id=user_id, pet_type=petType, name=petName)
+    db.session.add(new_pet)
+    db.session.commit()
+
+    # Save pet info in session for immediate use
+    session['pet_name'] = petName
+    session['pet_type'] = petType
+
+    # Redirect to home
     firstLogin = False
+    return redirect(url_for('newquests'))
+
+
+@app.route('/create_quests', methods=['GET', 'POST'])
+def newquests():
+    if request.method == 'GET':
+        return render_template('newquests.html')
+    
+    user_id = session.get('user_id')
+
+    if not user_id:
+        flash("User session not found, please login again.", 'error')
+        return redirect(url_for('login'))
+    
+
+    fake_user = User.query.filter_by(username="fake_user").first()
+    fake_quests = Quest.query.filter_by(assigned_to=fake_user.id).all()
+
+    selections = request.form.get("clickedButtons")
+    for quest in fake_quests:
+        if quest.description in selections:
+            copied_quest = Quest(
+            description=quest.description,
+            user_id=user_id,
+            quest_type=quest.quest_type,
+            weight=quest.reward,
+            due_date=datetime.now(tz=pytz.utc) + timedelta(days=1),
+            repeat_days=quest.repeat_days,
+            end_of_day=quest.end_of_day,)
+            copied_quest.save()
+    db.session.commit()   
+    
     return redirect(url_for('home'))
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -83,10 +129,6 @@ def register():
 
     new_user = User(username=username, password_hash=password_hash, email=email)
     new_user.save()
-
-    # Create pet, most things just default for now, can apadt as needed
-    new_pet = Pet(user_id=new_user.id, pet_type="dog")
-    new_pet.save()
 
     firstLogin = True
 
@@ -162,14 +204,31 @@ def login():
 def home():
     username = session.get('username', 'Guest')
     user_id = session.get('user_id')
+
+    # Initialize the pet variable to None
+    pet = None
+
+    # Fetch the user's pet either from session or from the database
+    pet_name = session.get('pet_name')
+    pet_type = session.get('pet_type')
+
     pet = Pet.query.filter_by(user_id=user_id).first()
+    if pet:
+        pet_name = pet.name
+        pet_type = pet.pet_type
+        # Update the session with the pet information
+        session['pet_name'] = pet_name
+        session['pet_type'] = pet_type
+
     user_quests = Quest.query.filter_by(assigned_to=user_id).all()
 
+    # Render the template with the correct pet values
     return render_template('home.html',
                            username=username,
-                           pet_type=pet.pet_type,
-                           pet_happiness=pet.happiness,
-                           pet_hunger=pet.hunger,
+                           pet_type=pet_type,
+                           pet_name=pet_name,
+                           pet_happiness=pet.happiness if pet else None,
+                           pet_hunger=pet.hunger if pet else None,
                            user_quests=user_quests)
 
 
@@ -192,66 +251,78 @@ def user_quests():
 
     return f"quests for {username}: " #+ ', '.join(quests)
 
+@app.route('/api/feed_pet', methods=['POST'])
+def feed_pet():
+    food_type = request.form.get('type', 'food')  # 'food' or 'special'
+
+    # Fetch the userss pet
+    user_id = session.get('user_id')
+    if not user_id:
+        return {"error": "User session not found!"}, 400
+
+    pet = Pet.query.filter_by(user_id=user_id).first()
+    if not pet:
+        return {"error": "Pet not found!"}, 404
+
+    # Update the food quantity
+    if food_type == 'food' and pet.food_quantity > 0:
+        pet.food_quantity -= 1
+        pet.hunger = max(0, pet.hunger - 10)
+    elif food_type == 'special' and pet.special_food_quantity > 0:
+        pet.special_food_quantity -= 1
+        pet.hunger = max(0, pet.hunger - 20)
+
+    pet.update()  # Save changes to the database
+    return {
+        "success": True,
+        "food_quantity": pet.food_quantity,
+        "special_food_quantity": pet.special_food_quantity,
+        "hunger": pet.hunger
+    }, 200
+
+@app.route('/api/get_food_quantities', methods=['GET'])
+def get_food_quantities():
+    user_id = session.get('user_id')
+    if not user_id:
+        return {"error": "Unauthorized"}, 401
+
+    pet = Pet.query.filter_by(user_id=user_id).first()
+    if not pet:
+        return {"error": "Pet not found!"}, 404
+
+    return {
+        "food_quantity": pet.food_quantity,
+        "special_food_quantity": pet.special_food_quantity
+    }, 200
+
+@app.route('/api/update_food_quantities', methods=['POST'])
+def update_food_quantities():
+    user_id = session.get('user_id')
+    if not user_id:
+        return {"error": "Unauthorized"}, 401
+
+    pet = Pet.query.filter_by(user_id=user_id).first()
+    if not pet:
+        return {"error": "Pet not found!"}, 404
+
+    food_quantity = request.form.get('food_quantity')
+    special_food_quantity = request.form.get('special_food_quantity')
+
+    if food_quantity is not None:
+        pet.food_quantity = int(food_quantity)
+
+    if special_food_quantity is not None:
+        pet.special_food_quantity = int(special_food_quantity)
+
+    db.session.commit()
+
+    return {"success": "Food quantities updated successfully!"}, 200
+
 
 ######################################
 ###### API and Quest Management ######
 ######################################
 
-@app.route('/api/create_quest', methods=['POST'])
-def create_quest():
-    """ API request to create a quest.
-
-        Post:
-            String -> description = description of quest
-            Int -> weight = value of quest
-            Int -> user_id = user ID to assign the quest to
-
-        Return:
-            String -> Success/Error
-            Int -> Return Code
-    """
-
-    # stopped using this, but kept changes as they would be needed
-    description = request.form.get('description')
-    weight = request.form.get('weight')
-    if not description:
-        return {"Error" : "Missing field in POST!"}, 400
-
-    # Create and store the new quest
-    new_quest = Quest(description=description, user_id=user_id, weight=weight)
-    db.session.add(new_quest)
-    db.session.commit()
-
-    return {"success" : "Quest created successfully!", "quest": new_quest.__repr__()}, 200
-
-@app.route('/api/assign_quest', methods=['POST'])
-def assign_quest():
-    """ API request to link a quest to a user.
-
-        Post:
-            String -> username = username
-            Int -> quest_id = quest_id
-
-        Return:
-            String -> Success/Error
-            Int -> Return Code
-    """
-    username = request.form.get('username')
-    quest_id = request.form.get('quest_id')
-
-    # Find the user and quest
-    user = User.query.filter_by(username=username).first()
-    quest = Quest.query.get(quest_id)
-
-    if not user or not quest:
-        return {"error" :f"User or quest not found!"}, 400
-
-    # Create a new QuestAssignment to link the user and the quest
-    assignment = QuestAssignment(user_id=user.id, quest_id=quest.id)
-    db.session.add(assignment)
-    db.session.commit()
-
-    return {"success" :f"Quest '{quest.description}' assigned to user {user.username}."}, 200
 
 @app.route('/api/add_task', methods=['POST'])
 def add_task():
@@ -340,7 +411,7 @@ def delete_task():
 
     # Mark the task as deleted instead of actually deleting it
     try:
-        task.is_deleted = True
+        db.session.delete(task)
         db.session.commit()
     except Exception as e:
         db.session.rollback()
@@ -377,19 +448,35 @@ def complete_task():
         app.logger.error(f"Task with ID {task_id} not found.")
         return {"error": "Task not found!"}, 404
 
-    # Mark the task as completed
+    # Fetch user pet
+    user_id = session.get('user_id')
+    pet = Pet.query.filter_by(user_id=user_id).first()
+
+    if not pet:
+        app.logger.error(f"Pet for user ID {user_id} not found.")
+        return {"error": "Pet not found!"}, 404
+
+    # Mark the task as completed and update food quantity
     try:
-        task.status = 'completed'
-        task.end_time = datetime.now(tz=pytz.utc)
-        app.logger.info(f"Task with ID {task_id} status set to completed. Attempting to commit...")
-        db.session.commit()
-        app.logger.info(f"Task with ID {task_id} successfully committed as completed.")
+        if task.status != 'completed':
+            task.status = 'completed'
+            task.end_time = datetime.now(tz=pytz.utc)
+
+            # Update pet food quantities based on task type
+            if task.quest_type == 'daily':
+                pet.food_quantity += 1
+            elif task.quest_type == 'weekly':
+                pet.special_food_quantity += 1
+
+            app.logger.info(f"Task with ID {task_id} status set to completed. Attempting to commit...")
+            db.session.commit()
+            app.logger.info(f"Task with ID {task_id} successfully committed as completed.")
     except Exception as e:
         app.logger.error(f"Error occurred while marking task as completed: {e}", exc_info=True)
         db.session.rollback()  # Rollback in case of an error
         return {"error": f"Failed to complete task. Error: {str(e)}"}, 500
 
-    return {"success": "Task marked as completed!"}, 200
+    return {"success": "Task marked as completed!", "task_type": task.quest_type}, 200
 
 @app.route('/api/completed_tasks', methods=['GET'])
 def completed_tasks():
@@ -425,6 +512,10 @@ def logout():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
+        user = User.query.filter_by(username="fake_user").first()
+        if not user:
+            load_presets()
     # app.app_context().push()
+    
 
     app.run(debug=True)

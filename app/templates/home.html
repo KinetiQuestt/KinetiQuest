@@ -6,6 +6,10 @@
     <title>KinetiQuest - Welcome</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+        :root {
+            --pixel-size: 6;
+        }
+
         body {
             display: flex;
             justify-content: center;
@@ -273,7 +277,7 @@
         }
 
         .pet-area {
-            background-color: #a37b5b;
+            background-color: #d6bfa3;
             padding: 0.5em;
             border-radius: 1em;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
@@ -286,17 +290,17 @@
         .todo-lists {
             display: flex;
             flex-direction: column;
-            width: 50%;
+            width: 150%;
         }
 
-        .todo-list, .weekly-todo-list {
+        .todo-list {
             max-height: 300px;
             overflow-y: auto;
             background-color: #d6bfa3;
             padding: 2em;
             border-radius: 1em;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            width: 180%;
+            width: 170%;
             position: relative;
             margin-top: 1em;
         }
@@ -332,7 +336,8 @@
         }
 
         .pet-display {
-            background-color: #d6bfa3;
+            background: url('/static/BackgroundPet.png') no-repeat center center;
+            background-size: cover;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -340,6 +345,9 @@
             max-width: 30em;
             height: 30em;
             position: relative;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            image-rendering: -moz-crisp-edges;
         }
 
         .food-area {
@@ -392,7 +400,7 @@
             justify-content: center;
         }
 
-        .todo-list h2, .weekly-todo-list h2 {
+        .todo-list h2, {
             text-align: center;
             font-size: 2.5em;
             margin-top: 0.5em;
@@ -509,7 +517,7 @@
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
             text-align: center;
             display: none;
-            z-index: 950;
+            z-index: 999;
         }
 
         .task-popup input[type="text"] {
@@ -520,7 +528,7 @@
             border: 0.1em solid #ccc;
             margin-bottom: 1em;
             box-sizing: border-box;
-            z-index: 950;
+            z-index: 999;
         }
 
         .task-popup button {
@@ -532,7 +540,7 @@
             border-radius: 2em;
             cursor: pointer;
             margin: 0.5em;
-            z-index: 950;
+            z-index: 999;
         }
 
         .task-popup button:hover {
@@ -547,7 +555,7 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
             display: none;
-            z-index: 950;
+            z-index: 999;
         }
 
         .delete-button {
@@ -606,6 +614,17 @@
             pointer-events: none;
         }
 
+        #pet {
+            width: calc(32px * var(--pixel-size));
+            height: calc(32px * var(--pixel-size));
+            position: absolute;
+            left: 0;
+            top: 0;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            image-rendering: -moz-crisp-edges;
+        }
+
     </style>
 </head>
 <body>
@@ -618,8 +637,8 @@
     <img id="logo" src="../static/dogandcat.png" alt="Dog and Cat" draggable="true" ondragstart="drag(event)">
 </div>
 
-<!-- Completed Tasks -->
-<button class="completed-tasks-button" onclick="showCompletedTasks()">Completed Tasks</button>
+<!-- Completed Quests -->
+<button class="completed-tasks-button" onclick="showCompletedTasks()">Completed Quests</button>
 <button class="profile-button" onclick="showProfile()">Profile</button>
 <button class="logout-button" onclick="showLogout()">Logout</button>
 
@@ -630,13 +649,13 @@
         <!-- Pet Area -->
         <div class="pet-area" ondrop="drop(event)" ondragover="allowDrop(event)">
             <div class="pet-display">
-                <h2>Pet Area</h2>
+                <img id="pet" src="/static/Pet_Animations/{{ pet_type }}/{{ pet_type }}_Idle.gif" alt="{{ pet_name }}">
             </div>
         </div>
 
         <!-- Happiness Area -->
         <div class="happiness-area">
-            <h2 style="text-align: center;">Pet Happiness & Hunger Levels</h2>
+            <h2 style="text-align: center;">{{ pet_name }} Happiness & Hunger Levels</h2>
             <div class="happiness-bar">
                 <label for="happiness">Happiness:</label>
                 <progress id="happiness" value="{{ pet_happiness }}" max="100"></progress>
@@ -665,10 +684,10 @@
         <!-- Daily To-do List Area -->
         <div class="todo-list">
             <div class="input-task" style="position: absolute; top: 20px; right: 40px;">
-                <button onclick="showTaskPopup('daily')">Add Task</button>
+                <button onclick="showTaskPopup('daily')">Add Quest</button>
             </div>
 
-            <h2 style="text-align: left; margin-bottom: 10px;">Daily Tasks</h2>
+            <h2 style="text-align: left; margin-bottom: 10px;">Quests</h2>
             <hr style="border: 1px solid #d6b588;">
 
             <!-- Scrollable task list -->
@@ -680,39 +699,8 @@
                         <input type="checkbox" class="complete-checkbox styled-checkbox" onclick="markTaskComplete('{{ quest.id }}', 'daily')"
                                {% if quest.status == 'completed' %}checked disabled{% endif %}>
                         <span class="task-text" contenteditable="true">{{ quest.description }}</span>
-                        <span class="task-due-date">{{ quest.due_date }}</span>
-                        <span class="task-due-time">{{ quest.due_time }}</span>
                         <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
                     </div>
-                </div>
-                {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Weekly To-do List Area -->
-        <div class="weekly-todo-list">
-            <div class="input-task" style="position: absolute; top: 20px; right: 40px;">
-                <button onclick="showTaskPopup('weekly')">Add Task</button>
-            </div>
-
-            <h2 style="text-align: left; margin-bottom: 10px;">Weekly Tasks</h2>
-            <hr style="border: 1px solid #d6b588;">
-
-            <!-- Scrollable task list -->
-            <div class="scrollable-tasks" id="weeklyTasks">
-                {% for quest in user_quests %}
-                {% if quest.quest_type == 'weekly' %}
-                <div class="task-wrapper">
-                    <div class="task" data-task-id="{{ quest.id }}">
-                        <input type="checkbox" class="complete-checkbox styled-checkbox" onclick="markTaskComplete('{{ quest.id }}', 'weekly')">
-                        <span class="task-text" contenteditable="true">{{ quest.description }}</span>
-                        <span class="task-due-date">{{ quest.due_date }}</span>
-                        <span class="task-due-time">{{ quest.due_time }}</span>
-                        <span class="task-repeat-days">{{ quest.repeat_days }}</span>
-                        <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
-                    </div>
-                    <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
                 </div>
                 {% endif %}
                 {% endfor %}
@@ -722,23 +710,74 @@
 </div>
 
 <!-- Task Popup -->
-<div class="task-overlay" id="taskOverlay"></div>
-<div class="task-popup" id="taskPopup">
+<div class="task-popup" id="taskPopup" style="display: none; flex-direction: column; gap: 1em; width: 400px;">
     <h3>Add New Task</h3>
-    <input type="text" id="taskInput" placeholder="Enter a new task" maxlength="29">
-    <input type="date" id="dueDateInput" placeholder="Due Date">
-    <input type="time" id="dueTimeInput" placeholder="Due Time">
-    <select id="repeatDaysInput" multiple>
-        <option value="Monday">Monday</option>
-        <option value="Tuesday">Tuesday</option>
-        <option value="Wednesday">Wednesday</option>
-        <option value="Thursday">Thursday</option>
-        <option value="Friday">Friday</option>
-        <option value="Saturday">Saturday</option>
-        <option value="Sunday">Sunday</option>
-    </select>
-    <button onclick="addTask()">Add</button>
-    <button onclick="closeTaskPopup()">Cancel</button>
+    <div style="display: flex; flex-direction: column; gap: 0.5em;">
+        <input type="text" id="taskInput" placeholder="Enter a new task" maxlength="29" style="width: 100%;">
+        <label for="dueDateInput">Due Date:</label>
+        <input type="date" id="dueDateInput" placeholder="Due Date">
+    </div>
+
+    <!-- Time Selection UI -->
+    <div class="time-selection" style="display: flex; flex-direction: column; gap: 1em; margin-top: 1em;">
+        <label for="dueTimeInput">Time:</label>
+        <div style="display: flex; flex-direction: row;">
+            <input type="radio" id="endOfDay" name="dueTime" value="23:59">
+            <label for="endOfDay">End of Day (11:59 PM)</label>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5em;">
+            <input type="radio" id="specificTime" name="dueTime" value="specific">
+            <label for="specificTime">Specific Time:</label>
+            <input type="time" id="dueTimeInput" placeholder="Due Time" disabled>
+        </div>
+    </div>
+
+    <!-- Repeat option selection for the task -->
+    <div class="repeat-option-container" style="display: flex; flex-direction: column; margin-top: 1em;">
+        <label for="repeatOption">Repeat:</label>
+        <select id="repeatOption" onchange="toggleRepeatDays()">
+            <option value="none">Do not repeat</option>
+            <option value="onlyToday">Only Today</option>
+            <option value="specificDays">Select Days</option>
+        </select>
+    </div>
+
+    <div id="repeatDaysInputContainer" style="display:none; flex-direction: column; gap: 0.5em;">
+        <label>Select Days:</label>
+        <div>
+            <input type="checkbox" id="monday" value="Monday">
+            <label for="Monday">Monday</label>
+        </div>
+        <div>
+            <input type="checkbox" id="tuesday" value="Tuesday">
+            <label for="Tuesday">Tuesday</label>
+        </div>
+        <div>
+            <input type="checkbox" id="wednesday" value="Wednesday">
+            <label for="Wednesday">Wednesday</label>
+        </div>
+        <div>
+            <input type="checkbox" id="thursday" value="Thursday">
+            <label for="Thursday">Thursday</label>
+        </div>
+        <div>
+            <input type="checkbox" id="friday" value="Friday">
+            <label for="Friday">Friday</label>
+        </div>
+        <div>
+            <input type="checkbox" id="saturday" value="Saturday">
+            <label for="Saturday">Saturday</label>
+        </div>
+        <div>
+            <input type="checkbox" id="sunday" value="Sunday">
+            <label for="Sunday">Sunday</label>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 1em; justify-content: center;">
+        <button onclick="addTask()">Add</button>
+        <button onclick="closeTaskPopup()">Cancel</button>
+    </div>
 </div>
 
 <!-- Profile Popup -->
@@ -759,19 +798,14 @@
 </div>
 <button class="logout-button" onclick="showLogout()">Logout</button>
 
-<!-- Completed Tasks Popup -->
+<!-- Completed Quests Popup -->
 <div class="completed-tasks-overlay" id="completedTasksOverlay"></div>
 <div class="completed-tasks-popup" id="completedTasksPopup">
-    <h3>Completed Tasks</h3>
     <div id="dailyCompletedTasks">
-        <h4>Daily Tasks</h4>
+        <h4>Completed Quests</h4>
         <div id="dailyTasksList"></div>
     </div>
-    <div id="weeklyCompletedTasks">
-        <h4>Weekly Tasks</h4>
-        <div id="weeklyTasksList"></div>
-    </div>
-    <button class="profile-popup-button" onclick="closeCompletedTasks()">Close</button>
+    <button class="close-button" onclick="closeCompletedTasks()">Close</button>
 </div>
 
 <!-- JavaScript Code -->
@@ -780,97 +814,42 @@
     let foodQuantity = 1;
     let specialfoodQuantity = 1;
 
+    function togglePopup(popupId, show) {
+        const popupElement = document.getElementById(popupId);
+        const overlayElement = document.getElementById('popupOverlay');
+        popupElement.style.display = show ? 'block' : 'none';
+        overlayElement.style.display = show ? 'block' : 'none';
+        if (show) {
+            overlayElement.style.pointerEvents = 'auto';
+        } else {
+            overlayElement.style.pointerEvents = 'none';
+        }
+    }
+
     function showProfile() {
-        document.getElementById('profilePopup').style.display = 'block';
-        document.getElementById('popupOverlay').style.display = 'block';
+        togglePopup('profilePopup', true);
     }
 
     function closeProfilePopup() {
-        document.getElementById('profilePopup').style.display = 'none';
-        document.getElementById('popupOverlay').style.display = 'none';
+        togglePopup('profilePopup', false);
     }
 
     function showLogout() {
-        document.getElementById('logoutPopup').style.display = 'block';
-        document.getElementById('popupOverlay').style.display = 'block';
+        togglePopup('logoutPopup', true);
     }
 
     function closeLogoutPopup() {
-        document.getElementById('logoutPopup').style.display = 'none';
-        document.getElementById('popupOverlay').style.display = 'none';
+        togglePopup('logoutPopup', false);
     }
 
     function logoutProfile() {
-        document.getElementById('logoutPopup').style.display = 'none';
-        document.getElementById('popupOverlay').style.display = 'none';
+        togglePopup('logoutPopup', false);
         window.location.href = '/';
     }
 
     function closeCompletedTasks() {
-        document.getElementById('completedTasksPopup').style.display = 'none';
+        togglePopup('completedTasksPopup', false);
         document.getElementById('completedTasksOverlay').style.display = 'none';
-    }
-
-    function dimContent(dim) {
-        const dimClass = 'dimmed';
-        const elementsToDim = document.querySelectorAll('body > *:not(#popupOverlay):not(#profilePopup):not(#logoutPopup)');
-        elementsToDim.forEach(element => {
-            if (dim) {
-                element.classList.add(dimClass);
-            } else {
-                element.classList.remove(dimClass);
-            }
-        });
-    }
-
-    function allowDrop(ev) {
-        ev.preventDefault();
-    }
-
-    function drag(ev) {
-        ev.dataTransfer.setData("text", ev.target.id);
-    }
-
-    function drop(ev) {
-        ev.preventDefault();
-        const data = ev.dataTransfer.getData("text");
-
-        if (data === "logo") {
-            alert(':(');
-            return;
-        } else {
-            if (data == "foodIMG") {
-                if (foodQuantity == 0) {
-                    alert('No food available!');
-                    return;
-                }
-                alert('Food given to pet!');
-                foodQuantity--;
-                updateFoodQuantity();
-                return;
-            }
-            else if (data == "specialfoodIMG") {
-                if (specialfoodQuantity == 0) {
-                    alert('No food available!');
-                    return;
-                }
-                alert('Special food given to pet!');
-                specialfoodQuantity--;
-                updateFoodQuantity();
-                return;
-            }
-            
-            alert('That is not food!');
-        }
-    }
-
-    function showTaskPopup(taskType) {
-        currentTaskType = taskType;
-        document.getElementById('taskPopup').style.display = 'block';
-        document.getElementById('taskOverlay').style.display = 'block';
-
-        const repeatDaysInput = document.getElementById('repeatDaysInput');
-        repeatDaysInput.style.display = taskType === 'daily' ? 'none' : 'block';
     }
 
     function closeTaskPopup() {
@@ -879,14 +858,21 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        const taskInput = document.getElementById('taskInput');
-
-        taskInput.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                addTask();
-            }
-        });
+        // Fetch the initial food quantities from the server
+        fetch('/api/get_food_quantities')
+            .then(response => response.json())
+            .then(data => {
+                if (data.food_quantity !== undefined && data.special_food_quantity !== undefined) {
+                    foodQuantity = data.food_quantity;
+                    specialfoodQuantity = data.special_food_quantity;
+                    updateFoodQuantity(); // Update the displayed quantities
+                } else {
+                    console.error('Failed to fetch food quantities');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching food quantities:', error);
+            });
     });
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -922,19 +908,39 @@
         });
     });
 
+    function dimContent(dim) {
+        const dimClass = 'dimmed';
+        const elementsToDim = document.querySelectorAll('body > *:not(#popupOverlay):not(#profilePopup):not(#logoutPopup)');
+        elementsToDim.forEach(element => {
+            if (dim) {
+                element.classList.add(dimClass);
+            } else {
+                element.classList.remove(dimClass);
+            }
+        });
+    }
+
+    document.getElementById('specificTime').addEventListener('change', function() {
+        document.getElementById('dueTimeInput').disabled = !this.checked;
+    });
+    document.getElementById('endOfDay').addEventListener('change', function() {
+        document.getElementById('dueTimeInput').disabled = true;
+    });
+
+    function toggleRepeatDays() {
+        const repeatOption = document.getElementById('repeatOption').value;
+        const repeatDaysContainer = document.getElementById('repeatDaysInputContainer');
+        repeatDaysContainer.style.display = (repeatOption === 'specificDays') ? 'flex' : 'none';
+    }
+
     function addTask() {
         const taskInputElement = document.getElementById('taskInput');
         const taskInput = taskInputElement.value;
-        const dueDate = document.getElementById('dueDateInput').value;
-        const dueTime = document.getElementById('dueTimeInput').value;
-        const repeatDays = Array.from(document.getElementById('repeatDaysInput').selectedOptions)
-                            .map(option => option.value);
 
         if (taskInput.length > 29) {
             alert("Task description cannot exceed 29 characters.");
             return;
         }
-        const taskType = currentTaskType;
 
         if (!taskInput.trim()) {
             alert("Task description cannot be empty.");
@@ -946,65 +952,25 @@
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: `task_description=${encodeURIComponent(taskInput)}&task_type=${encodeURIComponent(taskType)}&due_date=${encodeURIComponent(dueDate)}&due_time=${encodeURIComponent(dueTime)}&repeat_days=${encodeURIComponent(repeatDays)}`
+            body: `task_description=${encodeURIComponent(taskInput)}&task_type=${encodeURIComponent(currentTaskType)}`
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                const taskList = document.getElementById(taskType === 'daily' ? 'dailyTasks' : 'weeklyTasks');
+                const taskList = document.getElementById(currentTaskType === 'daily' ? 'dailyTasks' : 'weeklyTasks');
                 const newTaskWrapper = document.createElement('div');
                 newTaskWrapper.classList.add('task-wrapper');
 
-                // Create task container
-                const taskContainer = document.createElement('div');
-                taskContainer.classList.add('task');
-                taskContainer.dataset.taskId = data.task_id;
+                const taskContainer = createTaskContainer(taskInput, data.task_id);
+                newTaskWrapper.appendChild(taskContainer);
 
-                // Create checkbox element for marking task complete
-                const completeCheckbox = document.createElement('input');
-                completeCheckbox.type = 'checkbox';
-                completeCheckbox.classList.add('complete-checkbox', 'styled-checkbox');
-                completeCheckbox.onclick = () => markTaskComplete(data.task_id, taskType);
-                taskContainer.appendChild(completeCheckbox);
-
-                // Add a span for the task description
-                const taskText = document.createElement('span');
-                taskText.classList.add('task-text');
-                taskText.contentEditable = 'true';
-                taskText.textContent = taskInput;
-                taskContainer.appendChild(taskText);
-
-                // Add event listeners for editing and focusing the task description
-                taskText.addEventListener('focus', function() {
-                    this.dataset.originalValue = this.innerText;
-                });
-                taskText.addEventListener('blur', function() {
-                    const taskId = this.closest('.task').dataset.taskId;
-                    const newDescription = this.innerText;
-                    updateTask(taskId, newDescription);
-                });
-                taskText.addEventListener('keydown', function(event) {
-                    if (event.key === 'Escape') {
-                        this.innerText = this.dataset.originalValue;
-                        this.blur();
-                    } else if (event.key === 'Enter') {
-                        event.preventDefault();
-                        this.blur();
-                    }
-                });
-
-                // Delete button
                 const deleteButton = document.createElement('button');
                 deleteButton.classList.add('delete-btn');
                 deleteButton.innerHTML = '&times;';
                 deleteButton.onclick = () => deleteTask(data.task_id);
-                newTaskWrapper.appendChild(taskContainer);
                 newTaskWrapper.appendChild(deleteButton);
 
-                // Append new task wrapper to the task list
                 taskList.appendChild(newTaskWrapper);
-
-                // Clear input field after adding the task
                 taskInputElement.value = '';
             } else {
                 alert('Failed to add task: ' + data.error);
@@ -1017,6 +983,47 @@
         closeTaskPopup();
     }
 
+    function createTaskContainer(taskInput, taskId) {
+        const taskContainer = document.createElement('div');
+        taskContainer.classList.add('task');
+        taskContainer.dataset.taskId = taskId;
+
+        const completeCheckbox = document.createElement('input');
+        completeCheckbox.type = 'checkbox';
+        completeCheckbox.classList.add('complete-checkbox', 'styled-checkbox');
+        completeCheckbox.onclick = () => markTaskComplete(taskId);
+        taskContainer.appendChild(completeCheckbox);
+
+        const taskText = document.createElement('span');
+        taskText.classList.add('task-text');
+        taskText.contentEditable = 'true';
+        taskText.textContent = taskInput;
+        addTaskTextEventListeners(taskText);
+        taskContainer.appendChild(taskText);
+
+        return taskContainer;
+    }
+
+    function addTaskTextEventListeners(taskText) {
+        taskText.addEventListener('focus', function() {
+            this.dataset.originalValue = this.innerText;
+        });
+        taskText.addEventListener('blur', function() {
+            const taskId = this.closest('.task').dataset.taskId;
+            const newDescription = this.innerText;
+            updateTask(taskId, newDescription);
+        });
+        taskText.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                this.innerText = this.dataset.originalValue;
+                this.blur();
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                this.blur();
+            }
+        });
+    }
+
     function updateTask(taskId, newDescription) {
         if (!newDescription.trim()) {
             alert("Task description cannot be empty.");
@@ -1027,13 +1034,11 @@
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: `task_id=${encodeURIComponent(taskId)}&new_description=${encodeURIComponent(newDescription)}&new_due_date=${encodeURIComponent(newDueDate)}&new_repeat_days=${encodeURIComponent(newRepeatDays)}`
+            body: `task_id=${encodeURIComponent(taskId)}&new_description=${encodeURIComponent(newDescription)}`
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                console.log('Task updated successfully.');
-            } else {
+            if (!data.success) {
                 alert('Failed to update task: ' + data.error);
             }
         })
@@ -1065,10 +1070,10 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                const taskElement = document.querySelector(`.task[data-task-id='${taskId}']`);
+                // Remove the task from the list in the frontend
+                const taskElement = document.querySelector(`.task[data-task-id='${taskId}']`).closest('.task-wrapper');
                 if (taskElement) {
-                    taskElement.closest('.task-wrapper').remove();
-                    adjustScrollableHeight();
+                    taskElement.remove();
                 }
             } else {
                 alert('Failed to delete task: ' + data.error);
@@ -1080,54 +1085,193 @@
         });
     }
 
-    function markTaskComplete(taskId, taskType) {
-        if (!taskId) {
-            alert('Invalid task ID.');
-            return;
-        }
-
-        fetch('/api/complete_task', {
+    function markTaskComplete(taskId) {
+        fetch(`/api/complete_task`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
             body: `task_id=${encodeURIComponent(taskId)}`
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(data => {
-                    throw new Error(data.error || 'Unknown error occurred');
-                });
-            }
-            return response.json();
-        })
+        }).then(response => response.json())
         .then(data => {
             if (data.success) {
-                console.log('Task marked as completed.');
+                const taskWrapper = document.querySelector(`.task[data-task-id='${taskId}']`).closest('.task-wrapper');
+                if (taskWrapper) {
+                    taskWrapper.querySelector('.task').classList.add('completed-task');
+                    taskWrapper.querySelector('.complete-checkbox').disabled = true;
+                    taskWrapper.querySelector('.task').style.opacity = 0.6;
+                    taskWrapper.querySelector('.task').style.textDecoration = 'line-through';
+                }
 
-                if (taskType === 'daily') {
+                // Update food quantity after completing a task
+                if (data.task_type === 'daily') {
                     alert('Congratulations for completing a daily task! You earned food!');
                     foodQuantity++;
-                }
-                else if (taskType === 'weekly') {
+                } else if (data.task_type === 'weekly') {
                     alert('Congratulations for completing a weekly task! You earned special food!');
                     specialfoodQuantity++;
                 }
-                updateFoodQuantity();
-
-                const taskElement = document.querySelector(`.task[data-task-id='${taskId}']`);
-                if (taskElement) {
-                    taskElement.classList.add('completed-task');
-                }
-            } else if (data.error) {
-                alert('Failed to complete task: ' + data.error);
+                updateFoodQuantity(); // Update the display after completing the task
+                saveFoodQuantities(); // Persist the new quantity to the backend
             } else {
-                alert('Unexpected response format.');
+                alert('Failed to mark task as complete.');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while marking the task as completed: ' + error.message);
+            alert('An error occurred while marking the task as complete.');
+        });
+    }
+
+    function allowDrop(ev) {
+        ev.preventDefault();
+    }
+
+    function drag(ev) {
+        ev.dataTransfer.setData("text", ev.target.id);
+    }
+
+    function drop(ev) {
+        ev.preventDefault();
+        const data = ev.dataTransfer.getData("text");
+
+        if (data === "logo") {
+            alert(':(');
+        }
+        if (data === "foodIMG" || data === "specialfoodIMG") {
+            alert('Food given to pet!');
+            feedPet(data === 'foodIMG' ? 'food' : 'special');
+        }
+    }
+
+    function showTaskPopup(taskType) {
+        currentTaskType = taskType;
+        document.getElementById('taskPopup').style.display = 'block';
+        document.getElementById('taskOverlay').style.display = 'block';
+
+        const repeatDaysInput = document.getElementById('repeatDaysInput');
+        repeatDaysInput.style.display = taskType === 'daily' ? 'none' : 'block';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const petElement = document.getElementById('pet');
+        const petArea = document.querySelector('.pet-display');
+        const petType = "{{ pet_type }}";
+
+        const petAnimations = {
+            idle: `/static/Pet_Animations/${petType}/${petType}_Idle.gif`,
+            pet: `/static/Pet_Animations/${petType}/${petType}_Pet.gif`,
+            walkRight: `/static/Pet_Animations/${petType}/${petType}_Walk_Right.gif`,
+            walkLeft: `/static/Pet_Animations/${petType}/${petType}_Walk_Left.gif`,
+            treat: `/static/Pet_Animations/${petType}/${petType}_Treat.gif`
+        };
+
+        petElement.src = petAnimations.idle;
+        let petPosition = { x: 100, y: 100 };
+        let targetPosition = { x: 100, y: 100 };
+        const speed = 0.3;
+        let currentAnimation = 'idle';
+
+        function updatePetPosition() {
+            const deltaX = targetPosition.x - petPosition.x;
+            const deltaY = targetPosition.y - petPosition.y;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            if (distance < speed) {
+                petPosition.x = targetPosition.x;
+                petPosition.y = targetPosition.y;
+                if (currentAnimation !== 'idle') {
+                    petElement.src = petAnimations.idle;
+                    currentAnimation = 'idle';
+                }
+            } else {
+                petPosition.x += (deltaX / distance) * speed;
+                petPosition.y += (deltaY / distance) * speed;
+
+                if (deltaX >= 0 && currentAnimation !== 'walkRight') {
+                    petElement.src = petAnimations.walkRight;
+                    currentAnimation = 'walkRight';
+                } else if (deltaX < 0 && currentAnimation !== 'walkLeft') {
+                    petElement.src = petAnimations.walkLeft;
+                    currentAnimation = 'walkLeft';
+                }
+            }
+
+            petPosition.x = Math.max(0, Math.min(petPosition.x, petArea.offsetWidth - petElement.offsetWidth));
+            petPosition.y = Math.max(0, Math.min(petPosition.y, petArea.offsetHeight - petElement.offsetHeight));
+            petElement.style.transform = `translate(${petPosition.x}px, ${petPosition.y}px)`;
+
+            requestAnimationFrame(updatePetPosition);
+        }
+
+        function movePetRandomly() {
+            const maxX = petArea.clientWidth - petElement.clientWidth;
+            const maxY = petArea.clientHeight - petElement.clientHeight - 20;
+
+            targetPosition.x = Math.floor(Math.random() * maxX);
+            targetPosition.y = Math.floor(Math.random() * maxY);
+        }
+
+        requestAnimationFrame(updatePetPosition);
+        setInterval(movePetRandomly, 5000);
+
+        petElement.addEventListener('click', () => {
+            petElement.src = petAnimations.pet;
+        });
+
+        function updateFoodQuantity() {
+            document.getElementById('foodQuantityDisplay').innerText = `Food Quantity: ${foodQuantity}`;
+        }
+
+        document.addEventListener('dragover', allowDrop);
+        document.addEventListener('drop', drop);
+    });
+
+    function feedPet(foodType) {
+            fetch('/api/feed_pet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `type=${foodType}`
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    foodQuantity = data.food_quantity;  
+                    specialfoodQuantity = data.special_food_quantity;
+                    updateFoodQuantity();
+                    document.getElementById('hunger').value = data.hunger;
+
+                    // need to fix as this does not work since this function is outside above event listener
+                    petElement.src = petAnimations.treat;
+                    setTimeout(() => {
+                        petElement.src = petAnimations.idle;
+                    }, 2000);
+                } else {
+                    alert(data.message);
+                }
+            }).catch(console.error);
+        }
+
+    function updateFoodQuantity() {
+        document.getElementById('foodQuantity').textContent = foodQuantity;
+        document.getElementById('specialfoodQuantity').textContent = specialfoodQuantity;
+    }
+
+    function saveFoodQuantities() {
+        fetch('/api/update_food_quantities', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `food_quantity=${foodQuantity}&special_food_quantity=${specialfoodQuantity}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                console.error('Failed to update food quantities on server.');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating food quantities:', error);
         });
     }
 
@@ -1138,9 +1282,7 @@
                 if (data.tasks) {
                     // Clear previous tasks
                     const dailyTasksListElement = document.getElementById('dailyTasksList');
-                    const weeklyTasksListElement = document.getElementById('weeklyTasksList');
                     dailyTasksListElement.innerHTML = '';
-                    weeklyTasksListElement.innerHTML = '';
 
                     // Populate lists with completed tasks
                     data.tasks.forEach(task => {
@@ -1163,12 +1305,8 @@
                         taskElement.appendChild(taskDescription);
                         taskElement.appendChild(completedDateSpan);
 
-                        // Add the task to either daily or weekly tasks list
-                        if (task.quest_type === 'daily') {
-                            dailyTasksListElement.appendChild(taskElement);
-                        } else if (task.quest_type === 'weekly') {
-                            weeklyTasksListElement.appendChild(taskElement);
-                        }
+                        // Add the task to the completed tasks list
+                        dailyTasksListElement.appendChild(taskElement);
                     });
 
                     // Show the popup
@@ -1184,10 +1322,19 @@
             });
     }
 
-    function updateFoodQuantity() {
-        document.getElementById('foodQuantity').textContent = foodQuantity;
-        document.getElementById('specialfoodQuantity').textContent = specialfoodQuantity;
-    }
+    document.addEventListener('DOMContentLoaded', function() {
+        const petImage = document.getElementById('petImage');
+
+        petImage.addEventListener('click', function() {
+            petImage.src = 'path/to/_pet.gif';
+
+            petImage.addEventListener('load', function() {
+                setTimeout(function() {
+                    petImage.src = 'path/to/static_pet_image.jpg';
+                }, 3000);
+            });
+        });
+    });
 
     window.onload = updateFoodQuantity;
 

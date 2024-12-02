@@ -5,6 +5,7 @@ from sqlalchemy import update
 import re
 from datetime import datetime
 import pytz
+from loadquests import load_presets
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -56,6 +57,13 @@ def create():
 
     # Redirect to home
     firstLogin = False
+    return redirect(url_for('create_tasks'))
+
+
+@app.route('/create_tasks', methods=['GET', 'POST'])
+def newtasks():
+    #if request.method == 'GET':
+    #    return render_template('newtasks.html')
     return redirect(url_for('home'))
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -290,61 +298,6 @@ def update_food_quantities():
 ###### API and Quest Management ######
 ######################################
 
-@app.route('/api/create_quest', methods=['POST'])
-def create_quest():
-    """ API request to create a quest.
-
-        Post:
-            String -> description = description of quest
-            Int -> weight = value of quest
-            Int -> user_id = user ID to assign the quest to
-
-        Return:
-            String -> Success/Error
-            Int -> Return Code
-    """
-
-    # stopped using this, but kept changes as they would be needed
-    description = request.form.get('description')
-    weight = request.form.get('weight')
-    if not description:
-        return {"Error" : "Missing field in POST!"}, 400
-
-    # Create and store the new quest
-    new_quest = Quest(description=description, user_id=user_id, weight=weight)
-    db.session.add(new_quest)
-    db.session.commit()
-
-    return {"success" : "Quest created successfully!", "quest": new_quest.__repr__()}, 200
-
-@app.route('/api/assign_quest', methods=['POST'])
-def assign_quest():
-    """ API request to link a quest to a user.
-
-        Post:
-            String -> username = username
-            Int -> quest_id = quest_id
-
-        Return:
-            String -> Success/Error
-            Int -> Return Code
-    """
-    username = request.form.get('username')
-    quest_id = request.form.get('quest_id')
-
-    # Find the user and quest
-    user = User.query.filter_by(username=username).first()
-    quest = Quest.query.get(quest_id)
-
-    if not user or not quest:
-        return {"error" :f"User or quest not found!"}, 400
-
-    # Create a new QuestAssignment to link the user and the quest
-    assignment = QuestAssignment(user_id=user.id, quest_id=quest.id)
-    db.session.add(assignment)
-    db.session.commit()
-
-    return {"success" :f"Quest '{quest.description}' assigned to user {user.username}."}, 200
 
 @app.route('/api/add_task', methods=['POST'])
 def add_task():
@@ -534,6 +487,10 @@ def logout():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
+        user = User.query.filter_by(username="fake_user").first()
+        if not user:
+            load_presets()
     # app.app_context().push()
+    
 
     app.run(debug=True)

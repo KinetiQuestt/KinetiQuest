@@ -25,7 +25,7 @@ class User(db.Model):
     quests = db.relationship('Quest', backref='assigned_user', lazy='joined')
 
     #Pet, just one for now
-    pet = db.relationship('Pet', backref='owner', uselist=False)
+    pet = db.relationship('Pet', back_populates='user', uselist=False)
 
 
     # Representation of User (can be more flushed out)
@@ -127,7 +127,7 @@ class Pet(db.Model):
     happiness = db.Column(db.Integer, nullable=False, default=100)
     hunger = db.Column(db.Integer, nullable=False, default=100)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship('User', back_populates='pet')
+    user = db.relationship('User', back_populates='pet', overlaps="owner")
     food_quantity = db.Column(db.Integer, nullable=False, default=1)
     special_food_quantity = db.Column(db.Integer, nullable=False, default=1)
 

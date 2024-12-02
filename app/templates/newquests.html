@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Click Tracker</title>
+    <style>
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px;
+        }
+        .button-container button {
+            margin: 0 10px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .submit-button {
+            margin-top: 20px;
+            padding: 10px 30px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Click Buttons and Submit</h1>
+    <form id="buttonForm" action="" method="POST">
+        <div class="button-container">
+            <button type="button" class="track-button" data-value="Drink 4 glasses of water">Drink 4 glasses of water</button>
+            <button type="button" class="track-button" data-value="Do 10 pushups">Do 10 pushups</button>
+            <button type="button" class="track-button" data-value="Clean desk">Clean desk</button>
+            <button type="button" class="track-button" data-value="Take 5 minutes with devices">Take 5 minutes with devices</button>
+            <button type="button" class="track-button" data-value="Empty sink of dishes">Empty sink of dishes</button>
+        </div>
+        <input type="hidden" name="clickedButtons" id="clickedButtons">
+        <button type="submit" class="submit-button">Submit</button>
+    </form>
+
+    <script>
+        const clickedButtons = [];
+        const buttons = document.querySelectorAll('.track-button');
+
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                const value = button.getAttribute('data-value');
+                if (!clickedButtons.includes(value)) {
+                    clickedButtons.push(value);
+                    button.style.backgroundColor = 'lightgreen'; // Visually indicate selection
+                } else {
+                    // Remove button from the clicked list if clicked again
+                    clickedButtons.splice(clickedButtons.indexOf(value), 1);
+                    button.style.backgroundColor = ''; // Reset color
+                }
+            });
+        });
+
+        const form = document.getElementById('buttonForm');
+        form.addEventListener('submit', (event) => {
+            // Update hidden input with clicked buttons
+            document.getElementById('clickedButtons').value = JSON.stringify(clickedButtons);
+        });
+    </script>
+</body>
+</html> 

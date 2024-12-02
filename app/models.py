@@ -78,7 +78,7 @@ class Quest(db.Model):
         self.assigned_to = user_id
         self.quest_type = quest_type
         self.reward=weight
-        self.start_time = datetime.now()
+        self.start_time = datetime.now(tz=pytz.utc)
         self.end_time = self.start_time + timedelta(hours=duration_hours)
         self.due_date = due_date or self.start_time
         self.repeat_days = repeat_days or []

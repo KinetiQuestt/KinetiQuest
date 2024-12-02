@@ -3,7 +3,7 @@ from hashlib import sha256
 from models import db, User, Quest, Pet
 from sqlalchemy import update
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 from loadquests import load_presets
 
@@ -57,13 +57,38 @@ def create():
 
     # Redirect to home
     firstLogin = False
-    return redirect(url_for('create_tasks'))
+    return redirect(url_for('newquests'))
 
 
-@app.route('/create_tasks', methods=['GET', 'POST'])
-def newtasks():
-    #if request.method == 'GET':
-    #    return render_template('newtasks.html')
+@app.route('/create_quests', methods=['GET', 'POST'])
+def newquests():
+    if request.method == 'GET':
+        return render_template('newquests.html')
+    
+    user_id = session.get('user_id')
+
+    if not user_id:
+        flash("User session not found, please login again.", 'error')
+        return redirect(url_for('login'))
+    
+
+    fake_user = User.query.filter_by(username="fake_user").first()
+    fake_quests = Quest.query.filter_by(assigned_to=fake_user.id).all()
+
+    selections = request.form.get("clickedButtons")
+    for quest in fake_quests:
+        if quest.description in selections:
+            copied_quest = Quest(
+            description=quest.description,
+            user_id=user_id,
+            quest_type=quest.quest_type,
+            weight=quest.reward,
+            due_date=datetime.now(tz=pytz.utc) + timedelta(days=1),
+            repeat_days=quest.repeat_days,
+            end_of_day=quest.end_of_day,)
+            copied_quest.save()
+    db.session.commit()   
+    
     return redirect(url_for('home'))
 
 @app.route('/register', methods=['GET', 'POST'])

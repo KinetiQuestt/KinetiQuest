@@ -1139,8 +1139,11 @@
             alert(':(');
         }
         if (data === "foodIMG" || data === "specialfoodIMG") {
-            alert('Food given to pet!');
-            feedPet(data === 'foodIMG' ? 'food' : 'special');
+            // alert('Food given to pet!');
+            if ((data === "foodIMG" && foodQuantity > 0)
+                || (data === "specialfoodIMG" && specialfoodQuantity > 0)) {
+                    feedPet(data === 'foodIMG' ? 'food' : 'special');
+                }
         }
     }
 
@@ -1171,8 +1174,29 @@
         let targetPosition = { x: 100, y: 100 };
         const speed = 0.3;
         let currentAnimation = 'idle';
+        let isAnimating = false; // Prevent movement during animations
+
+        function setPetAnimation(animation) {
+            if (isAnimating) return; // prevent overlapping animations
+
+            petElement.src = petAnimations[animation];
+            isAnimating = true; // Stop movement
+
+            setTimeout(() => {
+                petElement.src = petAnimations.idle;
+                isAnimating = false; // Resume movement
+                updatePetPosition();
+                }, 2000);
+
+        }
+        
+        // Expose the animation function globally
+        window.setPetAnimation = setPetAnimation;
 
         function updatePetPosition() {
+            // skip if animation
+            if (isAnimating) return;
+
             const deltaX = targetPosition.x - petPosition.x;
             const deltaY = targetPosition.y - petPosition.y;
             const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
@@ -1205,6 +1229,9 @@
         }
 
         function movePetRandomly() {
+            // skip if animation
+            if (isAnimating) return;
+
             const maxX = petArea.clientWidth - petElement.clientWidth;
             const maxY = petArea.clientHeight - petElement.clientHeight - 20;
 
@@ -1216,9 +1243,8 @@
         setInterval(movePetRandomly, 5000);
 
         petElement.addEventListener('click', () => {
-            petElement.src = petAnimations.pet;
-
-            // api call to update happiness
+            setPetAnimation('pet');
+            // API call to update happiness
             fetch('/api/play_with_pet', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -1253,11 +1279,8 @@
                     updateFoodQuantity();
                     document.getElementById('hunger').value = data.hunger;
 
-                    // need to fix as this does not work since this function is outside above event listener
-                    petElement.src = petAnimations.treat;
-                    setTimeout(() => {
-                        petElement.src = petAnimations.idle;
-                    }, 2000);
+                    // Trigger the treat animation
+                    setPetAnimation('treat');
                 } else {
                     alert(data.message);
                 }

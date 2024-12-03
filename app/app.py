@@ -181,6 +181,11 @@ def login():
     # Clear any previous session data before setting new session data
     session.clear()
 
+    # reset due dates for each quest
+    for quest in user.quests:
+        quest.reset_due_date()
+    db.session.commit()
+
     # Set session data for the logged-in user
     session['user_id'] = user.id
     session['username'] = user.username  # Set the username in session

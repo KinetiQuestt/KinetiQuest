@@ -65,7 +65,7 @@ class Quest(db.Model):
     start_time = db.Column(db.DateTime, default=lambda: datetime.now(tz=pytz.utc))
     end_time = db.Column(db.DateTime)
 
-    due_date = db.Column(db.DateTime) # date due
+    due_date = db.Column(db.DateTime(timezone=True)) # date due
     repeat_days = db.Column(JSON, default=[]) # format is like ['Monday', 'Tuesday'] I think but in a JSON column
     due_time = db.Column(db.Time)  # time due
     end_of_day = db.Column(db.Boolean, default=False) # for if we just want to default to end of day
@@ -91,20 +91,58 @@ class Quest(db.Model):
             self.end_time = datetime.now(tz=pytz.utc)
             db.session.commit()
         
+    # helper to go from day to int for easy of use
+    def day_to_int(self, day):
+        days_map = {
+            'Monday': 0,
+            'Tuesday': 1,
+            'Wednesday': 2,
+            'Thursday': 3,
+            'Friday': 4,
+            'Saturday': 5,
+            'Sunday': 6
+        }
+        return days_map.get(day, -1)
+
     # untested
     def reset_due_date(self):
+
         now = datetime.now(tz=pytz.utc)
+
+        # make sure due_date is timezone-aware
+        if self.due_date and self.due_date.tzinfo is None:
+            self.due_date = self.due_date.replace(tzinfo=pytz.utc)
+
         # when past due, we just reset due data to +1 day for daily
         if self.quest_type == 'daily' and now > self.due_date:
+
             self.due_date = now + timedelta(days=1)
-        elif self.quest_type == 'weekly' and self.repeat_days:
+            # remember to actually update status
+            self.status = 'unstarted'
+
+        elif self.quest_type == 'weekly' and self.repeat_days and now > self.due_date:
+            # remember to actually update status
+            self.status = 'unstarted'
+
+            # convert days to ints
+            numeric_repeat_days = [self.day_to_int(day) for day in self.repeat_days]
+            numeric_repeat_days = sorted(numeric_repeat_days)
+
+            if not numeric_repeat_days:
+                # should never get here
+                return
+
             # Set next due date based on current weekday
             # we default to next day being first day
-            next_due_day=self.repeat_days[0]
+            next_due_day = self.repeat_days[0]
+
             # but if can iterate through the repeaded day and get a later time, we do that
             for day in self.repeat_days:
+                # now.weekday() should be int in same format as the helper function dict
                 if day > now.weekday():
-                        next_due_day=day
+                    next_due_day=day
+                    # break bc we sorted
+                    break
 
             days_until_next_due = (next_due_day - now.weekday()) % 7
             self.due_date = now + timedelta(days=days_until_next_due)

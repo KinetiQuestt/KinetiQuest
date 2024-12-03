@@ -38,6 +38,36 @@ class User(db.Model):
         self.password_hash = password_hash
         self.role = role
 
+    # call this once during each login
+    def update_pet_status_on_login(self):
+        # not pet confirmation but shouldn't be needed
+        if not self.pet:
+            return  
+
+        # Get the current time and the last login time
+        now = datetime.now(tz=pytz.utc)
+        last_login = self.account_updated
+
+        # timezones again
+        if last_login and last_login.tzinfo is None:
+            last_login = last_login.replace(tzinfo=pytz.utc)
+
+        # time difference in hours
+        time_diff = (now - last_login).total_seconds() / 3600 # seconds to hours
+
+        # update the pet's happiness and hunger
+        # can change multipliers I just picked
+        happiness_decrease = 3 * time_diff
+        hunger_decrease = 1.5 * time_diff
+
+        self.pet.happiness = max(0, self.pet.happiness - int(happiness_decrease))
+        self.pet.hunger = max(0, self.pet.hunger - int(hunger_decrease))
+
+        # now set acoount updated to now
+        self.account_updated = now
+
+        db.session.commit()
+
     def save(self):
         db.session.add(self)
         db.session.commit()
@@ -65,7 +95,7 @@ class Quest(db.Model):
     start_time = db.Column(db.DateTime, default=lambda: datetime.now(tz=pytz.utc))
     end_time = db.Column(db.DateTime)
 
-    due_date = db.Column(db.DateTime) # date due
+    due_date = db.Column(db.DateTime(timezone=True)) # date due
     repeat_days = db.Column(JSON, default=[]) # format is like ['Monday', 'Tuesday'] I think but in a JSON column
     due_time = db.Column(db.Time)  # time due
     end_of_day = db.Column(db.Boolean, default=False) # for if we just want to default to end of day
@@ -91,20 +121,58 @@ class Quest(db.Model):
             self.end_time = datetime.now(tz=pytz.utc)
             db.session.commit()
         
+    # helper to go from day to int for easy of use
+    def day_to_int(self, day):
+        days_map = {
+            'Monday': 0,
+            'Tuesday': 1,
+            'Wednesday': 2,
+            'Thursday': 3,
+            'Friday': 4,
+            'Saturday': 5,
+            'Sunday': 6
+        }
+        return days_map.get(day, -1)
+
     # untested
     def reset_due_date(self):
+
         now = datetime.now(tz=pytz.utc)
+
+        # make sure due_date is timezone-aware
+        if self.due_date and self.due_date.tzinfo is None:
+            self.due_date = self.due_date.replace(tzinfo=pytz.utc)
+
         # when past due, we just reset due data to +1 day for daily
         if self.quest_type == 'daily' and now > self.due_date:
+
             self.due_date = now + timedelta(days=1)
-        elif self.quest_type == 'weekly' and self.repeat_days:
+            # remember to actually update status
+            self.status = 'unstarted'
+
+        elif self.quest_type == 'weekly' and self.repeat_days and now > self.due_date:
+            # remember to actually update status
+            self.status = 'unstarted'
+
+            # convert days to ints
+            numeric_repeat_days = [self.day_to_int(day) for day in self.repeat_days]
+            numeric_repeat_days = sorted(numeric_repeat_days)
+
+            if not numeric_repeat_days:
+                # should never get here
+                return
+
             # Set next due date based on current weekday
             # we default to next day being first day
-            next_due_day=self.repeat_days[0]
+            next_due_day = self.repeat_days[0]
+
             # but if can iterate through the repeaded day and get a later time, we do that
             for day in self.repeat_days:
+                # now.weekday() should be int in same format as the helper function dict
                 if day > now.weekday():
-                        next_due_day=day
+                    next_due_day=day
+                    # break bc we sorted
+                    break
 
             days_until_next_due = (next_due_day - now.weekday()) % 7
             self.due_date = now + timedelta(days=days_until_next_due)
@@ -139,7 +207,8 @@ class Pet(db.Model):
     def __repr__(self):
         return f"<Pet(id={self.id}, name={self.name}, pet_type={self.pet_type}, health={self.happiness}, hunger={self.hunger})>"
 
-    def __init__(self, user_id, pet_type, name="Spot", hunger=100, happiness=100, food_quantity=1, special_food_quantity=1):
+    # default to 80
+    def __init__(self, user_id, pet_type, name="Spot", hunger=80, happiness=80, food_quantity=1, special_food_quantity=1):
         self.user_id = user_id
         self.pet_type = pet_type
         self.name = name
@@ -148,12 +217,15 @@ class Pet(db.Model):
         self.food_quantity = food_quantity
         self.special_food_quantity = special_food_quantity
 
-    def feed(self, amount):
-        # Decrease hunger (max 0)
-        self.hunger = max(0, self.hunger - amount)
-
-        # Decrease food quantity (max 0)
-        self.food_quantity = max(0, self.food_quantity - 1)
+    def feed(self, food_type):
+        # increase hunger (max 0)
+        # counter intuitive but looks better if not hungry is full bar
+        if food_type == 'food' and self.food_quantity > 0:
+            self.food_quantity -= 1
+            self.hunger = min(100, self.hunger + 10)
+        elif food_type == 'special' and self.special_food_quantity > 0:
+            self.special_food_quantity -= 1
+            self.hunger = min(100, self.hunger + 20)
 
         self.update()
 

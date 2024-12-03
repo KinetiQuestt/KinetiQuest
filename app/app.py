@@ -6,6 +6,7 @@ import re
 from datetime import datetime, timedelta
 import pytz
 from loadquests import load_presets
+import random
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -181,6 +182,14 @@ def login():
     # Clear any previous session data before setting new session data
     session.clear()
 
+    # happiness and hunger decay
+    user.update_pet_status_on_login()
+    
+    # reset due dates for each quest
+    for quest in user.quests:
+        quest.reset_due_date()
+    db.session.commit()
+
     # Set session data for the logged-in user
     session['user_id'] = user.id
     session['username'] = user.username  # Set the username in session
@@ -265,12 +274,8 @@ def feed_pet():
         return {"error": "Pet not found!"}, 404
 
     # Update the food quantity
-    if food_type == 'food' and pet.food_quantity > 0:
-        pet.food_quantity -= 1
-        pet.hunger = max(0, pet.hunger - 10)
-    elif food_type == 'special' and pet.special_food_quantity > 0:
-        pet.special_food_quantity -= 1
-        pet.hunger = max(0, pet.hunger - 20)
+    # use function because it was hard to track down this hardcoding here
+    pet.feed(food_type)
 
     pet.update()  # Save changes to the database
     return {
@@ -318,6 +323,34 @@ def update_food_quantities():
 
     return {"success": "Food quantities updated successfully!"}, 200
 
+@app.route('/api/play_with_pet', methods=['POST'])
+def play_with_pet():
+    """
+    API request to play with the pet.
+    Post:
+        None
+    Return:
+        JSON with success or error message and updated happiness.
+    """
+
+    # get id
+    user_id = session.get('user_id')
+    if not user_id:
+        app.logger.error("User not logged in.")
+        return {"error": "User not logged in!"}, 401
+
+    # get pet
+    pet = Pet.query.filter_by(user_id=user_id).first()
+    if not pet:
+        app.logger.error(f"Pet for user ID {user_id} not found.")
+        return {"error": "Pet not found!"}, 404
+
+    # thought it would be fun to make amount random 1, 2 or 3
+    play_amount = random.choice([1, 2, 3])
+    pet.play(play_amount)
+
+    app.logger.info(f"Played with pet (ID: {pet.id}). Increased happiness by {play_amount}.")
+    return {"success": "Played with pet!", "happiness": pet.happiness}, 200
 
 ######################################
 ###### API and Quest Management ######

@@ -177,7 +177,8 @@ class Pet(db.Model):
     def __repr__(self):
         return f"<Pet(id={self.id}, name={self.name}, pet_type={self.pet_type}, health={self.happiness}, hunger={self.hunger})>"
 
-    def __init__(self, user_id, pet_type, name="Spot", hunger=100, happiness=100, food_quantity=1, special_food_quantity=1):
+    # default to 80
+    def __init__(self, user_id, pet_type, name="Spot", hunger=80, happiness=80, food_quantity=1, special_food_quantity=1):
         self.user_id = user_id
         self.pet_type = pet_type
         self.name = name
@@ -186,12 +187,15 @@ class Pet(db.Model):
         self.food_quantity = food_quantity
         self.special_food_quantity = special_food_quantity
 
-    def feed(self, amount):
-        # Decrease hunger (max 0)
-        self.hunger = max(0, self.hunger - amount)
-
-        # Decrease food quantity (max 0)
-        self.food_quantity = max(0, self.food_quantity - 1)
+    def feed(self, food_type):
+        # increase hunger (max 0)
+        # counter intuitive but looks better if not hungry is full bar
+        if food_type == 'food' and self.food_quantity > 0:
+            self.food_quantity -= 1
+            self.hunger = min(100, self.hunger + 10)
+        elif food_type == 'special' and self.special_food_quantity > 0:
+            self.special_food_quantity -= 1
+            self.hunger = min(100, self.hunger + 20)
 
         self.update()
 

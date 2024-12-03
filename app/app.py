@@ -270,12 +270,8 @@ def feed_pet():
         return {"error": "Pet not found!"}, 404
 
     # Update the food quantity
-    if food_type == 'food' and pet.food_quantity > 0:
-        pet.food_quantity -= 1
-        pet.hunger = max(0, pet.hunger - 10)
-    elif food_type == 'special' and pet.special_food_quantity > 0:
-        pet.special_food_quantity -= 1
-        pet.hunger = max(0, pet.hunger - 20)
+    # use function because it was hard to track down this hardcoding here
+    pet.feed(food_type)
 
     pet.update()  # Save changes to the database
     return {

@@ -38,6 +38,36 @@ class User(db.Model):
         self.password_hash = password_hash
         self.role = role
 
+    # call this once during each login
+    def update_pet_status_on_login(self):
+        # not pet confirmation but shouldn't be needed
+        if not self.pet:
+            return  
+
+        # Get the current time and the last login time
+        now = datetime.now(tz=pytz.utc)
+        last_login = self.account_updated
+
+        # timezones again
+        if last_login and last_login.tzinfo is None:
+            last_login = last_login.replace(tzinfo=pytz.utc)
+
+        # time difference in hours
+        time_diff = (now - last_login).total_seconds() / 3600 # seconds to hours
+
+        # update the pet's happiness and hunger
+        # can change multipliers I just picked
+        happiness_decrease = 3 * time_diff
+        hunger_decrease = 1.5 * time_diff
+
+        self.pet.happiness = max(0, self.pet.happiness - int(happiness_decrease))
+        self.pet.hunger = max(0, self.pet.hunger - int(hunger_decrease))
+
+        # now set acoount updated to now
+        self.account_updated = now
+
+        db.session.commit()
+
     def save(self):
         db.session.add(self)
         db.session.commit()

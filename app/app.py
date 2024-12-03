@@ -182,6 +182,9 @@ def login():
     # Clear any previous session data before setting new session data
     session.clear()
 
+    # happiness and hunger decay
+    user.update_pet_status_on_login()
+    
     # reset due dates for each quest
     for quest in user.quests:
         quest.reset_due_date()

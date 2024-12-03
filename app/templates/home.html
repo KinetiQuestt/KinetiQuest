@@ -1217,6 +1217,19 @@
 
         petElement.addEventListener('click', () => {
             petElement.src = petAnimations.pet;
+
+            // api call to update happiness
+            fetch('/api/play_with_pet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('happiness').value = data.happiness;
+                } else {
+                    alert(data.message);
+                }
+            }).catch(console.error);
         });
 
         function updateFoodQuantity() {

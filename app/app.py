@@ -6,6 +6,7 @@ import re
 from datetime import datetime, timedelta
 import pytz
 from loadquests import load_presets
+import random
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -319,6 +320,34 @@ def update_food_quantities():
 
     return {"success": "Food quantities updated successfully!"}, 200
 
+@app.route('/api/play_with_pet', methods=['POST'])
+def play_with_pet():
+    """
+    API request to play with the pet.
+    Post:
+        None
+    Return:
+        JSON with success or error message and updated happiness.
+    """
+
+    # get id
+    user_id = session.get('user_id')
+    if not user_id:
+        app.logger.error("User not logged in.")
+        return {"error": "User not logged in!"}, 401
+
+    # get pet
+    pet = Pet.query.filter_by(user_id=user_id).first()
+    if not pet:
+        app.logger.error(f"Pet for user ID {user_id} not found.")
+        return {"error": "Pet not found!"}, 404
+
+    # thought it would be fun to make amount random 1, 2 or 3
+    play_amount = random.choice([1, 2, 3])
+    pet.play(play_amount)
+
+    app.logger.info(f"Played with pet (ID: {pet.id}). Increased happiness by {play_amount}.")
+    return {"success": "Played with pet!", "happiness": pet.happiness}, 200
 
 ######################################
 ###### API and Quest Management ######

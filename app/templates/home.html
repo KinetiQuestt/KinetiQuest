@@ -1185,6 +1185,22 @@
             setTimeout(() => {
                 petElement.src = petAnimations.idle;
                 isAnimating = false; // Resume movement
+
+                // continue walking towards the target position
+                const deltaX = targetPosition.x - petPosition.x;
+                if (Math.abs(deltaX) > 0) {
+                    if (deltaX > 0) {
+                        petElement.src = petAnimations.walkRight;
+                        currentAnimation = 'walkRight';
+                    } else {
+                        petElement.src = petAnimations.walkLeft;
+                        currentAnimation = 'walkLeft';
+                    }
+                } else {
+                    petElement.src = petAnimations.idle;
+                    currentAnimation = 'idle';
+                }
+
                 updatePetPosition();
                 }, 2000);
 

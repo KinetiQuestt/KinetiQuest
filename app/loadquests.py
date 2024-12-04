@@ -60,7 +60,7 @@ def load_presets():
     quest3.save()
 
     # Create pre-defined quests for the fake user
-    quest4_description = "Take 5 minutes with devices"
+    quest4_description = "Take 5 minutes without devices"
     quest4 = Quest(
         description=quest4_description,
         user_id=fake_user.id,

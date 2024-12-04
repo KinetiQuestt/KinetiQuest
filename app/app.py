@@ -369,7 +369,7 @@ def add_task():
             Int -> Return Code
     """
     task_description = request.form.get('task_description')
-    task_type = request.form.get('task_type')
+    task_type = request.form.get('task_type', 'daily') # Not currently included in form, rather calculated as daily if all days are selected
     user_id = session.get('user_id')
     due_date = request.form.get('due_date')  # 'YYYY-MM-DD'
     due_time = request.form.get('due_time')  # 'HH:MM'

@@ -115,6 +115,14 @@ class Quest(db.Model):
         self.due_time = due_time
         self.end_of_day = end_of_day
 
+        # print("Added task type")
+        # print(self.quest_type)
+        if (len(repeat_days) == 7) and (self.quest_type == 'specific'):
+            self.quest_type = 'daily'
+        elif (self.quest_type == 'specific') and (len(repeat_days) == 0):
+            self.quest_type = 'none'
+        # print(self.quest_type)
+
     def finish_quest(self):
         if self.status != 'completed':
             self.status = 'completed'

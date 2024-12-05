@@ -300,7 +300,7 @@
             padding: 2em;
             border-radius: 1em;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            width: 170%;
+            width: 250%;
             position: relative;
             margin-top: 1em;
         }
@@ -693,7 +693,7 @@
             <!-- Scrollable task list -->
             <div class="scrollable-tasks" id="dailyTasks">
                 {% for quest in user_quests %}
-                {% if quest.quest_type == 'daily' %}
+                {% if quest.status != 'inactive' %}
                 <div class="task-wrapper">
                     <div class="task {% if quest.status == 'completed' %}completed-task{% endif %}" data-task-id="{{ quest.id }}">
                         <input type="checkbox" class="complete-checkbox styled-checkbox" onclick="markTaskComplete('{{ quest.id }}', 'daily')"
@@ -737,8 +737,9 @@
         <label for="repeatOption">Repeat:</label>
         <select id="repeatOption" onchange="toggleRepeatDays()">
             <option value="none">Do not repeat</option>
-            <option value="onlyToday">Only Today</option>
-            <option value="specificDays">Select Days</option>
+            <option value="daily">Daily Repetition</option>
+            <option value="weekly">Weekly Repetition</option>
+            <option value="specific">Select Days</option>
         </select>
     </div>
 
@@ -930,12 +931,26 @@
     function toggleRepeatDays() {
         const repeatOption = document.getElementById('repeatOption').value;
         const repeatDaysContainer = document.getElementById('repeatDaysInputContainer');
-        repeatDaysContainer.style.display = (repeatOption === 'specificDays') ? 'flex' : 'none';
+        repeatDaysContainer.style.display = (repeatOption === 'specific') ? 'flex' : 'none';
+    }
+
+    function getSelectedRepeatDays() {
+        const days = [];
+        document.querySelectorAll('#repeatDaysInputContainer input[type="checkbox"]:checked').forEach(checkbox => 
+        { days.push(checkbox.value); });
+        return days;
     }
 
     function addTask() {
         const taskInputElement = document.getElementById('taskInput');
         const taskInput = taskInputElement.value;
+        const dueDate = document.getElementById('dueDateInput').value;
+        const dueTime = document.querySelector('input[name="dueTime"]:checked').value === "specific"
+            ? document.getElementById('dueTimeInput').value
+            : "23:59";
+        const repeatOption = document.getElementById('repeatOption').value;
+        const repeatDays = repeatOption === "specific" ? getSelectedRepeatDays() : [];
+        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
         if (taskInput.length > 29) {
             alert("Task description cannot exceed 29 characters.");
@@ -947,12 +962,18 @@
             return;
         }
 
+        const formData = new URLSearchParams();
+        formData.append('task_description', taskInput);
+        formData.append('due_date', dueDate);
+        formData.append('due_time', dueTime);
+        formData.append('task_type', repeatOption);
+        formData.append('timezone', userTimezone);
+        repeatDays.forEach(day => formData.append('repeat_days', day));
+
         fetch('/api/add_task', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `task_description=${encodeURIComponent(taskInput)}&task_type=${encodeURIComponent(currentTaskType)}`
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
         })
         .then(response => response.json())
         .then(data => {

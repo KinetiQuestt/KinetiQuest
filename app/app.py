@@ -33,6 +33,9 @@ def welcome():
 def create():
     global firstLogin
 
+    if not firstLogin:
+        return redirect(url_for('home'))
+
     if request.method == 'GET':
         return render_template('create.html')
     
@@ -57,12 +60,16 @@ def create():
     session['pet_type'] = petType
 
     # Redirect to home
-    firstLogin = False
     return redirect(url_for('newquests'))
 
 
 @app.route('/create_quests', methods=['GET', 'POST'])
 def newquests():
+    global firstLogin
+
+    if not firstLogin:
+        return redirect(url_for('home'))
+
     if request.method == 'GET':
         return render_template('newquests.html')
     
@@ -86,9 +93,12 @@ def newquests():
             weight=quest.reward,
             due_date=datetime.now(tz=pytz.utc) + timedelta(days=1),
             repeat_days=quest.repeat_days,
-            end_of_day=quest.end_of_day,)
+            end_of_day=quest.end_of_day,
+            repeat=quest.repeat)
             copied_quest.save()
     db.session.commit()   
+
+    firstLogin = False
     
     return redirect(url_for('home'))
 
@@ -231,6 +241,9 @@ def home():
 
     user_quests = Quest.query.filter_by(assigned_to=user_id).all()
 
+    for quest in user_quests:
+        quest.reset_due_date()
+
     # Render the template with the correct pet values
     return render_template('home.html',
                            username=username,
@@ -369,25 +382,29 @@ def add_task():
             Int -> Return Code
     """
     task_description = request.form.get('task_description')
-    task_type = request.form.get('task_type')
+    task_type = request.form.get('task_type', 'daily') # Not currently included in form, rather calculated as daily if all days are selected
     user_id = session.get('user_id')
     due_date = request.form.get('due_date')  # 'YYYY-MM-DD'
     due_time = request.form.get('due_time')  # 'HH:MM'
     repeat_days = request.form.getlist('repeat_days')  # ['Monday', 'Wednesday']
     end_of_day = bool(request.form.get('end_of_day'))  # bool
+    timezone = request.form.get('timezone')
+    local_timezone = pytz.timezone(timezone)
+    repeat = True if task_type != 'none' else False
 
     if not task_description or not task_type or not user_id:
         return {"error": "Missing field in POST!"}, 400
 
     # convert format of data and time
     if due_date:
-        due_date = datetime.strptime(due_date, '%Y-%m-%d').replace(tzinfo=pytz.utc)
+        due_date = datetime.strptime(due_date, '%Y-%m-%d').replace(tzinfo=local_timezone)
     if due_time:
         due_time = datetime.strptime(due_time, '%H:%M').time()
+        due_time.replace(tzinfo=local_timezone)
 
     # Create a new quest
     new_quest = Quest(description=task_description, user_id=user_id, quest_type=task_type, 
-                      due_date=due_date, repeat_days=repeat_days, due_time=due_time, end_of_day=end_of_day)
+                      due_date=due_date, repeat_days=repeat_days, due_time=due_time, end_of_day=end_of_day, repeat=repeat)
     new_quest.save()
 
     return {"success": "Task added successfully!", "task_id": new_quest.id}, 200

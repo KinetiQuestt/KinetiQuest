@@ -27,7 +27,8 @@ def load_presets():
         weight=5,  # Reward points
         due_date=datetime.now(tz=pytz.utc) + timedelta(days=1),  # Due by end of today
         repeat_days=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-        end_of_day=True  # Ends at the end of the day
+        end_of_day=True,  # Ends at the end of the day
+        repeat=True
     )
     quest1.save()
 
@@ -41,7 +42,8 @@ def load_presets():
         weight=5,  # Reward points
         due_date=datetime.now(tz=pytz.utc) + timedelta(days=1),  # Due by end of today
         repeat_days=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-        end_of_day=True  # Ends at the end of the day
+        end_of_day=True,  # Ends at the end of the day
+        repeat=True
     )
     quest2.save()
 
@@ -55,12 +57,13 @@ def load_presets():
         weight=5,  # Reward points
         due_date=datetime.now(tz=pytz.utc) + timedelta(days=1),  # Due by end of today
         repeat_days=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-        end_of_day=True  # Ends at the end of the day
+        end_of_day=True,  # Ends at the end of the day
+        repeat=True
     )
     quest3.save()
 
     # Create pre-defined quests for the fake user
-    quest4_description = "Take 5 minutes with devices"
+    quest4_description = "Take 5 minutes without devices"
     quest4 = Quest(
         description=quest4_description,
         user_id=fake_user.id,
@@ -69,7 +72,8 @@ def load_presets():
         weight=5,  # Reward points
         due_date=datetime.now(tz=pytz.utc) + timedelta(days=1),  # Due by end of today
         repeat_days=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-        end_of_day=True  # Ends at the end of the day
+        end_of_day=True,  # Ends at the end of the day
+        repeat=True
     )
     quest4.save()
 
@@ -83,7 +87,8 @@ def load_presets():
         weight=5,  # Reward points
         due_date=datetime.now(tz=pytz.utc) + timedelta(days=1),  # Due by end of today
         repeat_days=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-        end_of_day=True  # Ends at the end of the day
+        end_of_day=True,  # Ends at the end of the day
+        repeat=True
     )
     quest5.save()
 

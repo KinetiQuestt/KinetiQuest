@@ -33,6 +33,9 @@ def welcome():
 def create():
     global firstLogin
 
+    if not firstLogin:
+        return redirect(url_for('home'))
+
     if request.method == 'GET':
         return render_template('create.html')
     
@@ -57,12 +60,16 @@ def create():
     session['pet_type'] = petType
 
     # Redirect to home
-    firstLogin = False
     return redirect(url_for('newquests'))
 
 
 @app.route('/create_quests', methods=['GET', 'POST'])
 def newquests():
+    global firstLogin
+
+    if not firstLogin:
+        return redirect(url_for('home'))
+
     if request.method == 'GET':
         return render_template('newquests.html')
     
@@ -90,6 +97,8 @@ def newquests():
             repeat=quest.repeat)
             copied_quest.save()
     db.session.commit()   
+
+    firstLogin = False
     
     return redirect(url_for('home'))
 
@@ -231,6 +240,9 @@ def home():
         session['pet_type'] = pet_type
 
     user_quests = Quest.query.filter_by(assigned_to=user_id).all()
+
+    for quest in user_quests:
+        quest.reset_due_date()
 
     # Render the template with the correct pet values
     return render_template('home.html',

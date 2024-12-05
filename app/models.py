@@ -132,16 +132,6 @@ class Quest(db.Model):
         self.end_of_day = end_of_day
         self.repeat = repeat
 
-        
-        if due_date and due_time:
-            pre_timezone_date = datetime.combine(due_date.date(), due_time)
-            self.due_date = pre_timezone_date.astimezone(pytz.utc)
-        elif due_date:
-            # Default to end of day if no time is provided
-            self.due_date = due_date.replace(hour=23, minute=59, second=59)
-        else:
-            # If no due_date is provided, default to 24 hours from now
-            self.due_date = datetime.now(tz=pytz.utc) + timedelta(days=1)
 
         # print("Added task type")
         # print(self.quest_type)
@@ -158,6 +148,25 @@ class Quest(db.Model):
         elif (self.quest_type == 'weekly') and (len(repeat_days) == 0):
             self.repeat_days = [datetime.now().weekday()]
 
+        print(due_date)
+        print(due_time)
+
+
+
+        if due_date and due_time:
+            pre_timezone_date = datetime.combine(due_date.date(), due_time)
+            self.due_date = pre_timezone_date.astimezone(pytz.utc)
+        elif due_date:
+            # Default to end of day if no time is provided
+            self.due_date = due_date.replace(hour=23, minute=59, second=59)
+            print(self.due_date)
+        else:
+            # If no due_date is provided, default to 24 hours from now
+            self.due_date = datetime.now(tz=pytz.utc) + timedelta(days=1)
+
+        print(self.due_date)
+
+
     def finish_quest(self):
         if self.status != 'completed':
             self.status = 'completed'
@@ -169,27 +178,43 @@ class Quest(db.Model):
 
     # untested
     def reset_due_date(self):
+        
 
         now = datetime.now(tz=pytz.utc)
-
+        due_date = self.due_date.replace(tzinfo=pytz.utc)
+        
         # make sure due_date is timezone-aware
-        if self.due_date and self.due_date.tzinfo is None:
+        if due_date and due_date.tzinfo is None:
             self.due_date = self.due_date.replace(tzinfo=pytz.utc)
+            
 
         # when past due, we just reset due data to +1 day for daily
-        if self.quest_type == 'daily' and now > self.due_date:
-
+        if self.quest_type == 'daily' and now > due_date:
+            
             self.due_date = now + timedelta(days=1)
             # remember to actually update status
             self.status = 'uncompleted'
+            
 
-        elif self.quest_type == 'weekly' and self.repeat_days and now > self.due_date:
+
+        elif self.quest_type == 'weekly' and now > due_date:
+            self.status = 'uncompleted'
+            
+
+            next_due_day = self.repeat_days[0]
+
+            days_until_next_due = (next_due_day - now.weekday()) % 7
+            if days_until_next_due == 0:
+                days_until_next_due = 7
+            self.due_date = now + timedelta(days=days_until_next_due)
+            
+
+        elif self.quest_type == 'specific' and now > due_date:
             # remember to actually update status
             self.status = 'uncompleted'
 
             # convert days to ints
-            numeric_repeat_days = [self.day_to_int(day) for day in self.repeat_days]
-            numeric_repeat_days = sorted(numeric_repeat_days)
+            numeric_repeat_days = sorted(self.repeat_days)
 
             if not numeric_repeat_days:
                 # should never get here
@@ -208,7 +233,15 @@ class Quest(db.Model):
                     break
 
             days_until_next_due = (next_due_day - now.weekday()) % 7
+            if days_until_next_due == 0:
+                days_until_next_due = 7
             self.due_date = now + timedelta(days=days_until_next_due)
+
+        if not self.repeat and now > due_date:
+            self.status = 'inactive'
+
+        # else:
+            # self.due_date = now + timedelta(days=1)
 
         db.session.commit()
 

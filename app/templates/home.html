@@ -693,7 +693,7 @@
             <!-- Scrollable task list -->
             <div class="scrollable-tasks" id="dailyTasks">
                 {% for quest in user_quests %}
-                {% if quest.status != 'completed' %}
+                {% if quest.status != 'inactive' %}
                 <div class="task-wrapper">
                     <div class="task {% if quest.status == 'completed' %}completed-task{% endif %}" data-task-id="{{ quest.id }}">
                         <input type="checkbox" class="complete-checkbox styled-checkbox" onclick="markTaskComplete('{{ quest.id }}', 'daily')"

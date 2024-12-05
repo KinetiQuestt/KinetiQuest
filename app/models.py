@@ -38,6 +38,12 @@ class User(db.Model):
         self.password_hash = password_hash
         self.role = role
 
+    def determine_streak(self) -> int:
+        streak = 0
+        for quest in self.quests:
+            streak = streak + (quest.reward * quest.streak)
+        return streak
+
     # call this once during each login
     def update_pet_status_on_login(self):
         # not pet confirmation but shouldn't be needed
@@ -54,19 +60,27 @@ class User(db.Model):
 
         # time difference in hours
         time_diff = (now - last_login).total_seconds() / 3600 # seconds to hours
+        # print(time_diff)
 
-        # update the pet's happiness and hunger
-        # can change multipliers I just picked
-        happiness_decrease = 3 * time_diff
-        hunger_decrease = 1.5 * time_diff
+        # changes happiness and hunger decrease rate based on streaks of quests
+        # currently super high for demonstration purposes
+        happiness_decrease = map_to_range(self.determine_streak(), 25, 500, 1500, 150) * time_diff
+        hunger_decrease = map_to_range(self.determine_streak(), 25, 500, 3000, 300) * time_diff
 
+        # print(self.pet.happiness)
         self.pet.happiness = max(0, self.pet.happiness - int(happiness_decrease))
+        # print(self.pet.happiness)
+        # print(self.pet.hunger)
         self.pet.hunger = max(0, self.pet.hunger - int(hunger_decrease))
+        # print(self.pet.hunger)
 
         # now set acoount updated to now
         self.account_updated = now
+        
 
         db.session.commit()
+
+    
 
     def save(self):
         db.session.add(self)
@@ -92,6 +106,7 @@ class Quest(db.Model):
     quest_type = db.Column(db.String(10), nullable=False)
     is_deleted = db.Column(db.Boolean, default=False)
     repeat = db.Column(db.Boolean, default=False)
+    streak = db.Column(db.Integer, default=0)
 
     start_time = db.Column(db.DateTime, default=lambda: datetime.now(tz=pytz.utc))
     end_time = db.Column(db.DateTime)
@@ -123,11 +138,9 @@ class Quest(db.Model):
         self.description = description
         self.assigned_to = user_id
         self.quest_type = quest_type
-        self.reward=weight
         self.start_time = datetime.now(tz=pytz.utc)
         self.end_time = self.start_time + timedelta(hours=duration_hours)
         self.due_date = due_date or self.start_time
-        
         self.due_time = due_time
         self.end_of_day = end_of_day
         self.repeat = repeat
@@ -148,9 +161,16 @@ class Quest(db.Model):
         elif (self.quest_type == 'weekly') and (len(repeat_days) == 0):
             self.repeat_days = [datetime.now().weekday()]
 
-        print(due_date)
-        print(due_time)
-
+        if self.quest_type == 'none':
+            self.reward = 1
+        elif self.quest_type == 'daily':
+            self.reward = 6
+        elif self.quest_type == 'specific':
+            self.reward = 9
+        elif self.quest_type == 'weekly':
+            self.reward = 12
+        else:
+            self.reward = weight
 
 
         if due_date and due_time:
@@ -159,12 +179,11 @@ class Quest(db.Model):
         elif due_date:
             # Default to end of day if no time is provided
             self.due_date = due_date.replace(hour=23, minute=59, second=59)
-            print(self.due_date)
+            # print(self.due_date)
         else:
             # If no due_date is provided, default to 24 hours from now
             self.due_date = datetime.now(tz=pytz.utc) + timedelta(days=1)
 
-        print(self.due_date)
 
 
     def finish_quest(self):
@@ -190,6 +209,12 @@ class Quest(db.Model):
 
         # when past due, we just reset due data to +1 day for daily
         if self.quest_type == 'daily' and now > due_date:
+
+            end_of_due_day = due_date + timedelta(days=1)
+            if now < end_of_due_day:
+                self.streak = self.streak + 1
+            else:
+                self.streak = 0
             
             self.due_date = now + timedelta(days=1)
             # remember to actually update status
@@ -200,6 +225,11 @@ class Quest(db.Model):
         elif self.quest_type == 'weekly' and now > due_date:
             self.status = 'uncompleted'
             
+            end_of_due_week = due_date + timedelta(days=7)
+            if now < end_of_due_week:
+                self.streak = self.streak + 1
+            else:
+                self.streak = 0
 
             next_due_day = self.repeat_days[0]
 
@@ -235,6 +265,12 @@ class Quest(db.Model):
             days_until_next_due = (next_due_day - now.weekday()) % 7
             if days_until_next_due == 0:
                 days_until_next_due = 7
+
+            end_of_due_time = due_date + timedelta(days=days_until_next_due)
+            if due_date < end_of_due_time:
+                self.streak = self.streak + 1
+            else:
+                self.streak = 0
             self.due_date = now + timedelta(days=days_until_next_due)
 
         if not self.repeat and now > due_date:
@@ -242,6 +278,7 @@ class Quest(db.Model):
 
         # else:
             # self.due_date = now + timedelta(days=1)
+
 
         db.session.commit()
 
@@ -312,10 +349,14 @@ class Pet(db.Model):
         db.session.commit()
 
 
-# class QuestAssignment(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-#     quest_id = db.Column(db.Integer, db.ForeignKey('quest.id'), nullable=False)
-
-#     user = db.relationship('User', backref='assignments')
-#     quest = db.relationship('Quest', backref='assignments')
+def map_to_range(value, from_min, from_max, to_min, to_max):
+    if from_min == from_max:
+        raise ValueError("Source range cannot have zero length.")
+    
+    if value > from_max:
+        value = from_max
+    if value < from_min:
+        value = from_min
+    
+    # Linear mapping formula
+    return int(to_min + (value - from_min) * (to_max - to_min) / (from_max - from_min))

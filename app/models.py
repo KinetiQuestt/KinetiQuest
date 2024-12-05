@@ -91,6 +91,7 @@ class Quest(db.Model):
     reward = db.Column(db.Integer, nullable=False, default=0)
     quest_type = db.Column(db.String(10), nullable=False)
     is_deleted = db.Column(db.Boolean, default=False)
+    repeat = db.Column(db.Boolean, default=False)
 
     start_time = db.Column(db.DateTime, default=lambda: datetime.now(tz=pytz.utc))
     end_time = db.Column(db.DateTime)
@@ -103,45 +104,7 @@ class Quest(db.Model):
     def __repr__(self) -> str:
         return f"<Quest(id={self.id}, description={self.description}, assigned_to={self.assigned_to}, status={self.status})>"
 
-    def __init__(self, description, user_id, quest_type='daily', duration_hours=24, weight=5, due_date=None, repeat_days=None, due_time=None, end_of_day=True):
-        self.description = description
-        self.assigned_to = user_id
-        self.quest_type = quest_type
-        self.reward=weight
-        self.start_time = datetime.now(tz=pytz.utc)
-        self.end_time = self.start_time + timedelta(hours=duration_hours)
-        self.due_date = due_date or self.start_time
-        self.repeat_days = repeat_days or []
-        self.due_time = due_time
-        self.end_of_day = end_of_day
 
-        
-        if due_date and due_time:
-            pre_timezone_date = datetime.combine(due_date.date(), due_time)
-            print(pre_timezone_date)
-            self.due_date = pre_timezone_date.astimezone(pytz.utc)
-            print(self.due_date)
-        elif due_date:
-            # Default to end of day if no time is provided
-            self.due_date = due_date.replace(hour=23, minute=59, second=59)
-        else:
-            # If no due_date is provided, default to 24 hours from now
-            self.due_date = datetime.now(tz=pytz.utc) + timedelta(days=1)
-
-        # print("Added task type")
-        # print(self.quest_type)
-        if (len(repeat_days) == 7) and (self.quest_type == 'specific'):
-            self.quest_type = 'daily'
-        elif (self.quest_type == 'specific') and (len(repeat_days) == 0):
-            self.quest_type = 'none'
-        # print(self.quest_type)
-
-    def finish_quest(self):
-        if self.status != 'completed':
-            self.status = 'completed'
-            self.end_time = datetime.now(tz=pytz.utc)
-            db.session.commit()
-        
     # helper to go from day to int for easy of use
     def day_to_int(self, day):
         days_map = {
@@ -154,6 +117,55 @@ class Quest(db.Model):
             'Sunday': 6
         }
         return days_map.get(day, -1)
+    
+
+    def __init__(self, description, user_id, quest_type='daily', duration_hours=24, weight=5, due_date=None, repeat_days=None, due_time=None, end_of_day=True, repeat=False):
+        self.description = description
+        self.assigned_to = user_id
+        self.quest_type = quest_type
+        self.reward=weight
+        self.start_time = datetime.now(tz=pytz.utc)
+        self.end_time = self.start_time + timedelta(hours=duration_hours)
+        self.due_date = due_date or self.start_time
+        
+        self.due_time = due_time
+        self.end_of_day = end_of_day
+        self.repeat = repeat
+
+        
+        if due_date and due_time:
+            pre_timezone_date = datetime.combine(due_date.date(), due_time)
+            self.due_date = pre_timezone_date.astimezone(pytz.utc)
+        elif due_date:
+            # Default to end of day if no time is provided
+            self.due_date = due_date.replace(hour=23, minute=59, second=59)
+        else:
+            # If no due_date is provided, default to 24 hours from now
+            self.due_date = datetime.now(tz=pytz.utc) + timedelta(days=1)
+
+        # print("Added task type")
+        # print(self.quest_type)
+        self.repeat_days = []
+        for day in repeat_days:
+            self.repeat_days.append(self.day_to_int(day))
+
+        if (len(repeat_days) == 7) and (self.quest_type == 'specific'):
+            self.quest_type = 'daily'
+        elif (self.quest_type == 'specific') and (len(repeat_days) == 0):
+            self.quest_type = 'none'
+        elif (self.quest_type == 'specific') and (len(repeat_days) == 1):
+            self.quest_type = 'weekly'
+        elif (self.quest_type == 'weekly') and (len(repeat_days) == 0):
+            self.repeat_days = [datetime.now().weekday()]
+
+    def finish_quest(self):
+        if self.status != 'completed':
+            self.status = 'completed'
+            self.end_time = datetime.now(tz=pytz.utc)
+            db.session.commit()
+        
+    
+    
 
     # untested
     def reset_due_date(self):

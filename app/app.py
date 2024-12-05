@@ -86,7 +86,8 @@ def newquests():
             weight=quest.reward,
             due_date=datetime.now(tz=pytz.utc) + timedelta(days=1),
             repeat_days=quest.repeat_days,
-            end_of_day=quest.end_of_day,)
+            end_of_day=quest.end_of_day,
+            repeat=quest.repeat)
             copied_quest.save()
     db.session.commit()   
     
@@ -377,6 +378,7 @@ def add_task():
     end_of_day = bool(request.form.get('end_of_day'))  # bool
     timezone = request.form.get('timezone')
     local_timezone = pytz.timezone(timezone)
+    repeat = True if task_type != 'none' else False
 
     if not task_description or not task_type or not user_id:
         return {"error": "Missing field in POST!"}, 400
@@ -385,14 +387,12 @@ def add_task():
     if due_date:
         due_date = datetime.strptime(due_date, '%Y-%m-%d').replace(tzinfo=local_timezone)
     if due_time:
-        print(due_time)
         due_time = datetime.strptime(due_time, '%H:%M').time()
         due_time.replace(tzinfo=local_timezone)
-        print(due_time)
 
     # Create a new quest
     new_quest = Quest(description=task_description, user_id=user_id, quest_type=task_type, 
-                      due_date=due_date, repeat_days=repeat_days, due_time=due_time, end_of_day=end_of_day)
+                      due_date=due_date, repeat_days=repeat_days, due_time=due_time, end_of_day=end_of_day, repeat=repeat)
     new_quest.save()
 
     return {"success": "Task added successfully!", "task_id": new_quest.id}, 200

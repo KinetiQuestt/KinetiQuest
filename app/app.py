@@ -513,9 +513,9 @@ def complete_task():
             task.end_time = datetime.now(tz=pytz.utc)
 
             # Update pet food quantities based on task type
-            if task.quest_type == 'daily':
+            if task.quest_type == 'daily' or task.quest_type == 'none':
                 pet.food_quantity += 1
-            elif task.quest_type == 'weekly':
+            elif task.quest_type == 'weekly' or task.quest_type == 'specific':
                 pet.special_food_quantity += 1
 
             app.logger.info(f"Task with ID {task_id} status set to completed. Attempting to commit...")

@@ -1126,10 +1126,16 @@
 
                 // Update food quantity after completing a task
                 if (data.task_type === 'daily') {
-                    alert('Congratulations for completing a daily task! You earned food!');
+                    alert('Congratulations for completing an easier quest! You earned food!');
+                    foodQuantity++; 
+                } else if (data.task_type === 'none') {
+                    alert('Congratulations for completing an easier quest! You earned food!');
                     foodQuantity++;
                 } else if (data.task_type === 'weekly') {
-                    alert('Congratulations for completing a weekly task! You earned special food!');
+                    alert('Congratulations for completing a more difficult quest! You earned special food!');
+                    specialfoodQuantity++;
+                } else if (data.task_type === 'specific') {
+                    alert('Congratulations for completing a more difficult quest! You earned special food!');
                     specialfoodQuantity++;
                 }
                 updateFoodQuantity(); // Update the display after completing the task

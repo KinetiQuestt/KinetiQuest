@@ -87,7 +87,7 @@ class Quest(db.Model):
     description = db.Column(db.String(200), nullable=False)
     assigned_to = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-    status = db.Column(db.String(20), default='unstarted', nullable=False)
+    status = db.Column(db.String(20), default='uncompleted', nullable=False)
     reward = db.Column(db.Integer, nullable=False, default=0)
     quest_type = db.Column(db.String(10), nullable=False)
     is_deleted = db.Column(db.Boolean, default=False)
@@ -103,7 +103,7 @@ class Quest(db.Model):
     def __repr__(self) -> str:
         return f"<Quest(id={self.id}, description={self.description}, assigned_to={self.assigned_to}, status={self.status})>"
 
-    def __init__(self, description, user_id, quest_type='daily', duration_hours=2, weight=5, due_date=None, repeat_days=None, due_time=None, end_of_day=True):
+    def __init__(self, description, user_id, quest_type='daily', duration_hours=24, weight=5, due_date=None, repeat_days=None, due_time=None, end_of_day=True):
         self.description = description
         self.assigned_to = user_id
         self.quest_type = quest_type
@@ -114,6 +114,19 @@ class Quest(db.Model):
         self.repeat_days = repeat_days or []
         self.due_time = due_time
         self.end_of_day = end_of_day
+
+        
+        if due_date and due_time:
+            pre_timezone_date = datetime.combine(due_date.date(), due_time)
+            print(pre_timezone_date)
+            self.due_date = pre_timezone_date.astimezone(pytz.utc)
+            print(self.due_date)
+        elif due_date:
+            # Default to end of day if no time is provided
+            self.due_date = due_date.replace(hour=23, minute=59, second=59)
+        else:
+            # If no due_date is provided, default to 24 hours from now
+            self.due_date = datetime.now(tz=pytz.utc) + timedelta(days=1)
 
         # print("Added task type")
         # print(self.quest_type)
@@ -156,11 +169,11 @@ class Quest(db.Model):
 
             self.due_date = now + timedelta(days=1)
             # remember to actually update status
-            self.status = 'unstarted'
+            self.status = 'uncompleted'
 
         elif self.quest_type == 'weekly' and self.repeat_days and now > self.due_date:
             # remember to actually update status
-            self.status = 'unstarted'
+            self.status = 'uncompleted'
 
             # convert days to ints
             numeric_repeat_days = [self.day_to_int(day) for day in self.repeat_days]

@@ -625,6 +625,33 @@
             image-rendering: -moz-crisp-edges;
         }
 
+        .time-indicator {
+            margin-top: 5px;
+            width: 100%;
+        }
+
+        .time-left {
+            font-size: 0.9em;
+            color: #888;
+            margin-left: 10px;
+        }
+
+        progress {
+            width: 100%;
+            height: 8px;
+            appearance: none;
+        }
+
+        progress::-webkit-progress-bar {
+            background-color: #e0e0e0;
+            border-radius: 5px;
+        }
+
+        progress::-webkit-progress-value {
+            background-color: #4caf50;
+            border-radius: 5px;
+        }
+
     </style>
 </head>
 <body>
@@ -686,20 +713,32 @@
             <div class="input-task" style="position: absolute; top: 20px; right: 40px;">
                 <button onclick="showTaskPopup('daily')">Add Quest</button>
             </div>
-
+    
             <h2 style="text-align: left; margin-bottom: 10px;">Quests</h2>
             <hr style="border: 1px solid #d6b588;">
-
+    
             <!-- Scrollable task list -->
             <div class="scrollable-tasks" id="dailyTasks">
                 {% for quest in user_quests %}
-                {% if quest.quest_type == 'daily' %}
+                {% if quest.status != 'completed' %}
                 <div class="task-wrapper">
-                    <div class="task {% if quest.status == 'completed' %}completed-task{% endif %}" data-task-id="{{ quest.id }}">
+                    <div class="task" data-task-id="{{ quest.id }}" data-creation-date="{{ quest.start_time }}" data-due-date="{{ quest.due_date }}">
                         <input type="checkbox" class="complete-checkbox styled-checkbox" onclick="markTaskComplete('{{ quest.id }}', 'daily')"
                                {% if quest.status == 'completed' %}checked disabled{% endif %}>
-                        <span class="task-text" contenteditable="true">{{ quest.description }}</span>
+    
+                        <!-- Task Description -->
+                        <div class="task-content">
+                            <span class="task-text" contenteditable="true">{{ quest.description }}</span>
+                            <span class="time-left" id="timeLeft-{{ quest.id }}"></span>
+                        </div>
+    
+                        <!-- Delete Button -->
                         <button class="delete-btn" onclick="deleteTask('{{ quest.id }}')">&times;</button>
+                    </div>
+    
+                    <!-- Time Indicator -->
+                    <div class="time-indicator">
+                        <progress id="progress-{{ quest.id }}" value="0" max="100"></progress>
                     </div>
                 </div>
                 {% endif %}
@@ -950,6 +989,7 @@
             : "23:59";
         const repeatOption = document.getElementById('repeatOption').value;
         const repeatDays = repeatOption === "specific" ? getSelectedRepeatDays() : [];
+        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
         if (taskInput.length > 29) {
             alert("Task description cannot exceed 29 characters.");
@@ -966,6 +1006,7 @@
         formData.append('due_date', dueDate);
         formData.append('due_time', dueTime);
         formData.append('task_type', repeatOption);
+        formData.append('timezone', userTimezone);
         repeatDays.forEach(day => formData.append('repeat_days', day));
 
         fetch('/api/add_task', {
@@ -1393,6 +1434,33 @@
             });
     }
 
+    function updateProgressBars() {
+        const tasks = document.querySelectorAll('.task');
+
+        tasks.forEach(task => {
+            // Get creation date, due date, and current time
+            const creationDate = new Date(task.dataset.creationDate); // Parse creation date
+            const dueDate = new Date(task.dataset.dueDate);           // Parse due date
+            const now = new Date();                                   // Current time
+
+            // Calculate total duration and elapsed time
+            const totalDuration = dueDate - creationDate;             // Total task duration in ms
+            const elapsedTime = now - creationDate;                   // Time elapsed in ms
+
+            // Calculate progress percentage
+            let progressPercentage = (elapsedTime / totalDuration) * 100;
+
+            // Clamp progressPercentage to 0-100 range
+            progressPercentage = Math.min(Math.max(progressPercentage, 0), 100);
+
+            // Update progress bar
+            const progressBar = task.querySelector('progress');
+            if (progressBar) {
+                progressBar.value = progressPercentage;
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const petImage = document.getElementById('petImage');
 
@@ -1405,6 +1473,8 @@
                 }, 3000);
             });
         });
+
+        setInterval(updateTaskIndicators, 6000);
     });
 
     window.onload = updateFoodQuantity;

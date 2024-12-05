@@ -375,15 +375,20 @@ def add_task():
     due_time = request.form.get('due_time')  # 'HH:MM'
     repeat_days = request.form.getlist('repeat_days')  # ['Monday', 'Wednesday']
     end_of_day = bool(request.form.get('end_of_day'))  # bool
+    timezone = request.form.get('timezone')
+    local_timezone = pytz.timezone(timezone)
 
     if not task_description or not task_type or not user_id:
         return {"error": "Missing field in POST!"}, 400
 
     # convert format of data and time
     if due_date:
-        due_date = datetime.strptime(due_date, '%Y-%m-%d').replace(tzinfo=pytz.utc)
+        due_date = datetime.strptime(due_date, '%Y-%m-%d').replace(tzinfo=local_timezone)
     if due_time:
+        print(due_time)
         due_time = datetime.strptime(due_time, '%H:%M').time()
+        due_time.replace(tzinfo=local_timezone)
+        print(due_time)
 
     # Create a new quest
     new_quest = Quest(description=task_description, user_id=user_id, quest_type=task_type, 

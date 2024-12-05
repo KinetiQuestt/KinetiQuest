@@ -220,7 +220,7 @@
 
          .happiness-area {
             width: 29em;
-            height: 9.5em;
+            height: 11.5em;
             padding: 1em;
             background-color: #d6bfa3;
             border-radius: 10px;
@@ -294,7 +294,7 @@
         }
 
         .todo-list {
-            max-height: 300px;
+            height: 700px;
             overflow-y: auto;
             background-color: #d6bfa3;
             padding: 2em;
@@ -311,8 +311,8 @@
             box-sizing: border-box;
             display: block;
             flex-wrap: wrap;
-            height: 300px;
-            max-height: 200px;
+            height: 600px;
+            max-height: 1400px;
             overflow-y: auto;
             margin-top: 1em;
         }
@@ -655,7 +655,7 @@
 
         <!-- Happiness Area -->
         <div class="happiness-area">
-            <h2 style="text-align: center;">{{ pet_name }} Happiness & Hunger Levels</h2>
+            <h2 style="text-align: center;">{{ pet_name }}'s<br>Happiness & Hunger Levels</h2>
             <div class="happiness-bar">
                 <label for="happiness">Happiness:</label>
                 <progress id="happiness" value="{{ pet_happiness }}" max="100"></progress>

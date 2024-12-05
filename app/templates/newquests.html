@@ -5,33 +5,140 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Button Click Tracker</title>
     <style>
-        .button-container {
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+        body {
             display: flex;
             justify-content: center;
-            margin: 20px;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(45deg, #ff9a9e, #fad0c4, #ff9a9e);
+            background-size: 300% 300%;
+            animation: gradientAnimation 10s ease infinite;
         }
-        .button-container button {
-            margin: 0 10px;
-            padding: 10px 20px;
+
+        form {
+            text-align: center;
+        }
+
+        .task-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 5em;
+            margin-bottom: 2em;
+        }
+
+        .task {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .image-placeholder {
+            width: 200px;
+            height: 200px;
+            background-color: #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-placeholder .overlay {
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: block;
+            transition: opacity 0.3s ease;
+            border-radius: 8px;
+        }
+
+        .image-placeholder .overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .track-button {
+            background-color: #a37b5b;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
             cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: auto;
         }
+
+        .track-button:hover {
+            background-color: #4a3729;
+        }
+
         .submit-button {
-            margin-top: 20px;
-            padding: 10px 30px;
-            font-size: 16px;
+            background-color: #a37b5b;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            margin-top: 2em;
+            border-radius: 5px;
+            font-size: 2em;
             cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .submit-button:hover {
+            background-color: #4a3729;
+        }
+
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
     </style>
 </head>
 <body>
-    <h1 style="text-align: center;">Click Buttons and Submit</h1>
+    <div class="header" style="text-align: center; width: 75%; position: fixed; top: 0px; z-index: 900;">
+        <h1 style="font-family: 'VT323', monospace; font-size: 5em; margin: center;">Let's Add Some Quests!</h1>
+    </div>
     <form id="buttonForm" action="" method="POST">
-        <div class="button-container">
-            <button type="button" class="track-button" data-value="Drink 4 glasses of water">Drink 4 glasses of water</button>
-            <button type="button" class="track-button" data-value="Do 10 pushups">Do 10 pushups</button>
-            <button type="button" class="track-button" data-value="Clean desk">Clean desk</button>
-            <button type="button" class="track-button" data-value="Take 5 minutes with devices">Take 5 minutes with devices</button>
-            <button type="button" class="track-button" data-value="Empty sink of dishes">Empty sink of dishes</button>
+        <div class="task-container">
+            <div class="task">
+                <div class="image-placeholder">
+                    <div class="overlay"></div>
+                </div>
+                <button type="button" class="track-button" data-value="Drink 4 glasses of water">Drink 4 glasses of water</button>
+            </div>
+            <div class="task">
+                <div class="image-placeholder">
+                    <div class="overlay"></div>
+                </div>
+                <button type="button" class="track-button" data-value="Do 10 pushups">Do 10 pushups</button>
+            </div>
+            <div class="task">
+                <div class="image-placeholder">
+                    <div class="overlay"></div>
+                </div>
+                <button type="button" class="track-button" data-value="Clean desk">Clean desk</button>
+            </div>
+            <div class="task">
+                <div class="image-placeholder">
+                    <div class="overlay"></div>
+                </div>
+                <button type="button" class="track-button" data-value="Take 5 minutes with devices">Take 5 minutes with devices</button>
+            </div>
+            <div class="task">
+                <div class="image-placeholder">
+                    <div class="overlay"></div>
+                </div>
+                <button type="button" class="track-button" data-value="Empty sink of dishes">Empty sink of dishes</button>
+            </div>
         </div>
         <input type="hidden" name="clickedButtons" id="clickedButtons">
         <button type="submit" class="submit-button">Submit</button>
@@ -40,17 +147,20 @@
     <script>
         const clickedButtons = [];
         const buttons = document.querySelectorAll('.track-button');
+        const overlays = document.querySelectorAll('.overlay');
 
-        buttons.forEach(button => {
+        buttons.forEach((button, index) => {
             button.addEventListener('click', () => {
                 const value = button.getAttribute('data-value');
                 if (!clickedButtons.includes(value)) {
                     clickedButtons.push(value);
-                    button.style.backgroundColor = 'lightgreen'; // Visually indicate selection
+                    button.style.backgroundColor = 'Peru';
+                    overlays[index].classList.add('hidden');
                 } else {
                     // Remove button from the clicked list if clicked again
                     clickedButtons.splice(clickedButtons.indexOf(value), 1);
                     button.style.backgroundColor = ''; // Reset color
+                    overlays[index].classList.remove('hidden'); // Add overlay back
                 }
             });
         });
@@ -62,4 +172,4 @@
         });
     </script>
 </body>
-</html> 
+</html>
